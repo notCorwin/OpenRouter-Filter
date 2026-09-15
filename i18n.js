@@ -48,6 +48,39 @@ const I18N = {
     loadFailed: "Load failed",
     copyId: "Copy ID",
     copied: "Copied",
+    optionLabels: {
+      audio: "Audio",
+      file: "File",
+      image: "Image",
+      text: "Text",
+      video: "Video",
+      frequency_penalty: "Frequency Penalty",
+      include_reasoning: "Include Reasoning",
+      logit_bias: "Logit Bias",
+      logprobs: "Log Probabilities",
+      max_completion_tokens: "Max Completion Tokens",
+      max_tokens: "Max Tokens",
+      min_p: "Min P",
+      parallel_tool_calls: "Parallel Tool Calls",
+      prediction: "Prediction",
+      presence_penalty: "Presence Penalty",
+      reasoning: "Reasoning",
+      reasoning_effort: "Reasoning Effort",
+      repetition_penalty: "Repetition Penalty",
+      response_format: "Response Format",
+      seed: "Random Seed",
+      stop: "Stop Sequences",
+      structured_outputs: "Structured Outputs",
+      temperature: "Temperature",
+      tool_choice: "Tool Choice",
+      tools: "Tools",
+      top_a: "Top A",
+      top_k: "Top K",
+      top_logprobs: "Top Log Probabilities",
+      top_p: "Top P",
+      verbosity: "Verbosity",
+      web_search_options: "Web Search Options",
+    },
   },
   "zh-CN": {
     title: "OpenRouter 模型筛选",
@@ -73,6 +106,39 @@ const I18N = {
     loadFailed: "加载失败",
     copyId: "复制 ID",
     copied: "已复制",
+    optionLabels: {
+      audio: "音频",
+      file: "文件",
+      image: "图像",
+      text: "文本",
+      video: "视频",
+      frequency_penalty: "频率惩罚",
+      include_reasoning: "包含推理过程",
+      logit_bias: "Logit 偏置",
+      logprobs: "对数概率",
+      max_completion_tokens: "最大补全令牌数",
+      max_tokens: "最大令牌数",
+      min_p: "最小 P 值",
+      parallel_tool_calls: "并行工具调用",
+      prediction: "预测内容",
+      presence_penalty: "存在惩罚",
+      reasoning: "推理",
+      reasoning_effort: "推理强度",
+      repetition_penalty: "重复惩罚",
+      response_format: "响应格式",
+      seed: "随机种子",
+      stop: "停止序列",
+      structured_outputs: "结构化输出",
+      temperature: "温度",
+      tool_choice: "工具选择",
+      tools: "工具",
+      top_a: "Top A",
+      top_k: "Top K",
+      top_logprobs: "最高对数概率",
+      top_p: "Top P",
+      verbosity: "详细程度",
+      web_search_options: "网络搜索选项",
+    },
   },
   "zh-TW": {
     title: "OpenRouter 模型篩選",
@@ -98,6 +164,39 @@ const I18N = {
     loadFailed: "載入失敗",
     copyId: "複製 ID",
     copied: "已複製",
+    optionLabels: {
+      audio: "音訊",
+      file: "檔案",
+      image: "圖像",
+      text: "文字",
+      video: "影片",
+      frequency_penalty: "頻率懲罰",
+      include_reasoning: "包含推理過程",
+      logit_bias: "Logit 偏置",
+      logprobs: "對數機率",
+      max_completion_tokens: "最大補全權杖數",
+      max_tokens: "最大權杖數",
+      min_p: "最小 P 值",
+      parallel_tool_calls: "平行工具呼叫",
+      prediction: "預測內容",
+      presence_penalty: "存在懲罰",
+      reasoning: "推理",
+      reasoning_effort: "推理強度",
+      repetition_penalty: "重複懲罰",
+      response_format: "回應格式",
+      seed: "隨機種子",
+      stop: "停止序列",
+      structured_outputs: "結構化輸出",
+      temperature: "溫度",
+      tool_choice: "工具選擇",
+      tools: "工具",
+      top_a: "Top A",
+      top_k: "Top K",
+      top_logprobs: "最高對數機率",
+      top_p: "Top P",
+      verbosity: "詳細程度",
+      web_search_options: "網路搜尋選項",
+    },
   },
   ja: {
     title: "OpenRouter モデルフィルター",
@@ -514,6 +613,14 @@ let LOCALE = detectLocale();
 let t = I18N[LOCALE] || I18N[DEFAULT_LOCALE];
 
 // ── i18n helpers ───────────────────────────────────────────────────
+function optionLabel(value) {
+  return (
+    t.optionLabels?.[value] ||
+    I18N.en.optionLabels[value] ||
+    value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  );
+}
+
 function applyI18n() {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.dataset.i18n;
@@ -531,6 +638,10 @@ function applyI18n() {
     .join("");
 
   document.title = t.title || "OpenRouter Model Filter";
+
+  document.querySelectorAll("[data-option-value]").forEach((el) => {
+    el.textContent = optionLabel(el.dataset.optionValue);
+  });
 
   if (allModels.length > 0) {
     // Preserve user's filter values before rebuilding translated selects

@@ -340,7 +340,7 @@ function buildParamCheckboxes() {
   dom.paramsBody.innerHTML = sorted
     .map(
       (p) =>
-        `<label><input type="checkbox" class="param-cb" value="${esc(p)}"${p === "tools" ? " checked" : ""}> ${esc(p)}</label>`,
+        `<label><input type="checkbox" class="param-cb" value="${esc(p)}"${p === "tools" ? " checked" : ""}> <span data-option-value="${esc(p)}">${esc(optionLabel(p))}</span></label>`,
     )
     .join("");
 
@@ -363,14 +363,14 @@ function buildModalityCheckboxes() {
   dom.inputModalityBody.innerHTML = sortedIn
     .map(
       (mod) =>
-        `<label><input type="checkbox" class="input-modality-cb" value="${esc(mod)}"${mod === "text" ? " checked" : ""}> ${esc(mod)}</label>`,
+        `<label><input type="checkbox" class="input-modality-cb" value="${esc(mod)}"${mod === "text" ? " checked" : ""}> <span data-option-value="${esc(mod)}">${esc(optionLabel(mod))}</span></label>`,
     )
     .join("");
 
   dom.outputModalityBody.innerHTML = sortedOut
     .map(
       (mod) =>
-        `<label><input type="checkbox" class="output-modality-cb" value="${esc(mod)}"${mod === "text" ? " checked" : ""}> ${esc(mod)}</label>`,
+        `<label><input type="checkbox" class="output-modality-cb" value="${esc(mod)}"${mod === "text" ? " checked" : ""}> <span data-option-value="${esc(mod)}">${esc(optionLabel(mod))}</span></label>`,
     )
     .join("");
 }
