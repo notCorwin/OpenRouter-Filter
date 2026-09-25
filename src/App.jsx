@@ -99,34 +99,12 @@ import {
 
 const COMMON_PARAMETERS = [
   "tools",
-  "response_format",
+  "parallel_tool_calls",
   "reasoning",
-  "max_completion_tokens",
-  "temperature",
-  "top_p",
-];
-
-const ADVANCED_PARAMETERS = [
-  "structured_outputs",
   "reasoning_effort",
   "include_reasoning",
-  "max_tokens",
-  "stop",
-  "seed",
-  "tool_choice",
-  "parallel_tool_calls",
-  "web_search_options",
-  "frequency_penalty",
-  "presence_penalty",
-  "repetition_penalty",
-  "top_k",
-  "min_p",
-  "top_a",
-  "logprobs",
-  "top_logprobs",
-  "logit_bias",
-  "prediction",
-  "verbosity",
+  "max_completion_tokens",
+  "structured_outputs",
 ];
 
 const CAPABILITY_ICONS = {
@@ -470,16 +448,9 @@ export default function App() {
   const commonParameters = COMMON_PARAMETERS.filter((value) =>
     options?.parameters.includes(value),
   );
-  const advancedParameters = [
-    ...ADVANCED_PARAMETERS.filter((value) =>
-      options?.parameters.includes(value),
-    ),
-    ...(options?.parameters.filter(
-      (value) =>
-        !COMMON_PARAMETERS.includes(value) &&
-        !ADVANCED_PARAMETERS.includes(value),
-    ) || []),
-  ];
+  const advancedParameters =
+    options?.parameters.filter((value) => !COMMON_PARAMETERS.includes(value)) ||
+    [];
   const selectedAdvanced =
     filters?.params.filter((value) => advancedParameters.includes(value)) || [];
 

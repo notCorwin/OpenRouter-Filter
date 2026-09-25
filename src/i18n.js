@@ -111,6 +111,10 @@ const I18N = {
       web_search_options: "Web Search Options",
     },
     parameterDescriptions: {
+      response_format: "Choose the response format, such as JSON.",
+      temperature: "Adjust randomness; lower values favor consistent output.",
+      top_p:
+        "Sample from the smallest token set whose total probability reaches P.",
       structured_outputs:
         "Constrain responses to a JSON Schema for reliable parsing.",
       reasoning_effort: "Set how much effort the model spends on reasoning.",
@@ -240,6 +244,9 @@ const I18N = {
       web_search_options: "网络搜索选项",
     },
     parameterDescriptions: {
+      response_format: "指定响应格式，例如 JSON。",
+      temperature: "调整输出随机性；较低的值通常更稳定。",
+      top_p: "从累计概率达到设定阈值的最小候选集中采样。",
       structured_outputs: "用 JSON Schema 约束输出，方便程序稳定解析。",
       reasoning_effort: "设置模型投入推理的力度。",
       include_reasoning: "模型支持时，在响应中包含推理文本。",
