@@ -1,44 +1,27 @@
 # OpenRouter Model Filter
 
-A dependency-free static page for exploring the public OpenRouter model catalog. It turns the catalog into a sortable table and lets you narrow models by context length, input/output price, modality, and supported parameters.
+A static site for comparing models in the public [OpenRouter catalog](https://openrouter.ai/api/v1/models). Filter by context length, input and output token price, modalities, and supported parameters. Separate checkboxes include free models (either token price is zero) and batch models; both are off by default. Price options start at the lowest nonzero value in each column. OpenRouter native routes are excluded.
 
-## Features
-
-- Loads the current catalog from https://openrouter.ai/api/v1/models.
-- Filters input and output prices in dollars per million tokens.
-- Filters context length, input/output modalities, and supported parameters; OpenRouter-native routes are always excluded.
-- Sorts by model name, model ID, context, price, or maximum output.
-- Copies a model ID with the Clipboard API and a browser fallback.
-- Keeps filter selections in the URL hash so a filtered view can be shared.
-- Detects the browser language and provides the locales defined in [i18n.js](i18n.js), falling back to English.
-
-No API key or build step is required. The browser needs network access to OpenRouter and permission to use the Clipboard API for copying IDs.
+The interface uses React, Vite, Tailwind CSS, and shadcn/ui components. Color, radius, and typography tokens live in [src/index.css](src/index.css); dark mode follows the browser setting. Filters, search, sorting, and pagination are shareable in the URL hash. The UI supports English and Simplified Chinese, and Model IDs can be copied with one click.
 
 ## Run locally
 
-Serve the directory with a static HTTP server:
+```sh
+npm ci
+npm run dev
+```
 
-~~~sh
-python3 -m http.server 8080
-~~~
+Open the URL shown by Vite. Run `npm test` for the catalog logic check and `npm run build` to create the static `dist/` site. Preview that build with `npm run preview`.
 
-Open http://127.0.0.1:8080/ in a browser. You can also open [index.html](index.html) directly, although a local server gives more predictable browser behavior.
+## Publish to GitHub Pages
 
-The published static page is [notcorwin.github.io/openrouter-filter](https://notcorwin.github.io/openrouter-filter/).
+The [Pages workflow](.github/workflows/pages.yml) builds and publishes `dist/` on pushes to `main`. In the repository's **Settings → Pages → Build and deployment**, select **GitHub Actions** as the source before publishing this Vite version. The previous Pages source was `main` at `/`, which does not run the Vite build.
 
-## Project layout
+## Source
 
-- [index.html](index.html)：accessible page shell and table structure；
-- [app.js](app.js)：catalog loading, filtering, sorting and rendering；
-- [state.js](state.js)：DOM references and UI state；
-- [utils.js](utils.js)：price conversion, formatting and HTML escaping；
-- [i18n.js](i18n.js)：locale labels and language selection；
-- [style.css](style.css)：layout and visual styles。
+- [src/App.jsx](src/App.jsx): interface, catalog loading, and interactions
+- [src/model.js](src/model.js): filtering, sorting, prices, and URL state
+- [src/i18n.js](src/i18n.js): translated labels
+- [src/index.css](src/index.css): shared shadcn design tokens
 
-## Help and contributions
-
-If the catalog cannot load, check the browser console and network access to the OpenRouter models endpoint. When reporting a problem, include the browser, the filter URL hash, and the visible error without including private account data.
-
-Small, focused pull requests are welcome. Keep the page dependency-free and update the relevant locale strings when changing user-facing labels.
-
-Maintainer: [notCorwin](https://github.com/notCorwin).
+No API key is needed. The browser needs access to the OpenRouter catalog endpoint. If loading fails, use the retry button and check network access.

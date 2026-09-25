@@ -10,6 +10,39 @@ const DEFAULT_LOCALE = "en";
 const I18N = {
   en: {
     title: "OpenRouter Model Filter",
+    eyebrow: "MODEL EXPLORER",
+    description:
+      "Compare context, pricing, modalities, and capabilities across OpenRouter models.",
+    filters: "Filters",
+    showFilters: "Show filters",
+    hideFilters: "Hide filters",
+    filtersDescription: "Refine the catalog to fit your use case.",
+    reset: "Reset filters",
+    priceUnit: "USD per 1M tokens",
+    min: "Minimum",
+    max: "Maximum",
+    includeFree: "Include free models",
+    includeFreeDescription:
+      "Show models with a zero input or output token price.",
+    includeBatch: "Include batch models",
+    includeBatchDescription: "Show batch routes alongside standard models.",
+    search: "Search models",
+    searchPlaceholder: "Search name or Model ID…",
+    results: "Models",
+    resultsDescription: "Sorted results from the live OpenRouter catalog.",
+    showing: "Showing",
+    of: "of",
+    previous: "Previous",
+    next: "Next",
+    noResults: "No models found",
+    noResultsDescription: "Try clearing a filter or widening a price range.",
+    retry: "Try again",
+    errorDescription: "The model catalog could not be loaded.",
+    page: "Page",
+    sortBy: "Sort by",
+    ascending: "Ascending",
+    descending: "Descending",
+    themeSystem: "Appearance follows your browser setting",
     contextLabel: "Context",
     inPriceLabel: "Input price",
     outPriceLabel: "Output price",
@@ -31,6 +64,7 @@ const I18N = {
     loadFailed: "Load failed",
     copyId: "Copy ID",
     copied: "Copied",
+    copyFailed: "Could not copy Model ID",
     optionLabels: {
       audio: "Audio",
       file: "File",
@@ -67,6 +101,37 @@ const I18N = {
   },
   "zh-CN": {
     title: "OpenRouter 模型筛选",
+    eyebrow: "模型探索",
+    description: "按上下文、价格、模态与能力比较 OpenRouter 模型。",
+    filters: "筛选条件",
+    showFilters: "展开筛选",
+    hideFilters: "收起筛选",
+    filtersDescription: "缩小范围，找到适合需求的模型。",
+    reset: "重置筛选",
+    priceUnit: "美元 / 百万 Token",
+    min: "最小值",
+    max: "最大值",
+    includeFree: "包含免费模型",
+    includeFreeDescription: "显示输入或输出 Token 价格为零的模型。",
+    includeBatch: "包含 Batch 模型",
+    includeBatchDescription: "同时显示批处理路由模型。",
+    search: "搜索模型",
+    searchPlaceholder: "搜索名称或 Model ID…",
+    results: "模型",
+    resultsDescription: "来自 OpenRouter 实时目录的排序结果。",
+    showing: "显示",
+    of: "共",
+    previous: "上一页",
+    next: "下一页",
+    noResults: "没有匹配的模型",
+    noResultsDescription: "可清除筛选条件或扩大价格区间。",
+    retry: "重试",
+    errorDescription: "无法加载模型目录。",
+    page: "第",
+    sortBy: "排序依据",
+    ascending: "升序",
+    descending: "降序",
+    themeSystem: "外观跟随浏览器设置",
     contextLabel: "上下文",
     inPriceLabel: "输入价格",
     outPriceLabel: "输出价格",
@@ -88,6 +153,7 @@ const I18N = {
     loadFailed: "加载失败",
     copyId: "复制 ID",
     copied: "已复制",
+    copyFailed: "无法复制 Model ID",
     optionLabels: {
       audio: "音频",
       file: "文件",
@@ -124,103 +190,4 @@ const I18N = {
   },
 };
 
-// ── Safe localStorage helpers ──────────────────────────────────────
-function getStoredLang() {
-  try {
-    return localStorage.getItem("or_filter_lang");
-  } catch {
-    return null;
-  }
-}
-function setStoredLang(code) {
-  try {
-    localStorage.setItem("or_filter_lang", code);
-  } catch {
-    /* noop */
-  }
-}
-
-// ── Locale resolution ─────────────────────────────────────────────
-function detectLocale() {
-  const stored = getStoredLang();
-  if (stored && I18N[stored]) return stored;
-
-  const langs = navigator.languages || [navigator.language || DEFAULT_LOCALE];
-  for (const raw of langs) {
-    const lang = raw.replace(/_/g, "-");
-    if (I18N[lang]) return lang;
-    const prefix = lang.split("-")[0];
-    const candidates = Object.keys(I18N).filter(
-      (k) => k.startsWith(prefix + "-") || k === prefix,
-    );
-    if (candidates.length > 0) return candidates[0];
-  }
-  return DEFAULT_LOCALE;
-}
-
-let LOCALE = detectLocale();
-let t = I18N[LOCALE] || I18N[DEFAULT_LOCALE];
-
-// ── i18n helpers ───────────────────────────────────────────────────
-function optionLabel(value) {
-  return (
-    t.optionLabels?.[value] ||
-    I18N.en.optionLabels[value] ||
-    value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-  );
-}
-
-function applyI18n() {
-  document.querySelectorAll("[data-i18n]").forEach((el) => {
-    const key = el.dataset.i18n;
-    if (t[key] !== undefined) el.textContent = t[key];
-  });
-  const html = document.documentElement;
-  html.lang = LOCALE;
-
-  dom.langSelect.innerHTML = Object.keys(LOCALES)
-    .map(
-      (code) =>
-        `<option value="${code}"${code === LOCALE ? " selected" : ""}>${LOCALES[code]}</option>`,
-    )
-    .join("");
-
-  document.title = t.title || "OpenRouter Model Filter";
-
-  document.querySelectorAll("[data-option-value]").forEach((el) => {
-    el.textContent = optionLabel(el.dataset.optionValue);
-  });
-
-  if (allModels.length > 0) {
-    // Preserve user's filter values before rebuilding translated selects
-    const selIds = [
-      "ctxMin",
-      "ctxMax",
-      "inPriceMin",
-      "inPriceMax",
-      "outPriceMin",
-      "outPriceMax",
-    ];
-    const saved = {};
-    selIds.forEach((id) => {
-      if (dom[id]) saved[id] = dom[id].value;
-    });
-
-    updateCounts();
-    buildContextSelects();
-    buildPriceSelects();
-
-    selIds.forEach((id) => {
-      if (dom[id] && saved[id] !== undefined) dom[id].value = saved[id];
-    });
-    applyFilter();
-  }
-}
-
-function switchLang(code) {
-  if (!I18N[code]) return;
-  LOCALE = code;
-  t = I18N[code];
-  setStoredLang(code);
-  applyI18n();
-}
+export { LOCALES, I18N, DEFAULT_LOCALE };

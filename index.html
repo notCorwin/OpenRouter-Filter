@@ -1,173 +1,26 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta
-            name="description"
-            content="Search and filter OpenRouter models by context length, pricing, modality, and supported parameters."
-        />
-        <title>OpenRouter Model Filter</title>
-        <link rel="stylesheet" href="style.css" />
-    </head>
-    <body>
-        <noscript>
-            <p class="noscript-message">This app requires JavaScript.</p>
-        </noscript>
-        <main class="container">
-            <header class="app-header">
-                <div class="brand">
-                    <span class="brand-mark" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <circle cx="10.8" cy="10.8" r="6.5"></circle>
-                            <path d="m16 16 4.5 4.5"></path>
-                        </svg>
-                    </span>
-                    <h1>
-                        <span id="title" data-i18n="title"
-                            >OpenRouter Model Filter</span
-                        >
-                    </h1>
-                </div>
-                <div class="language-control">
-                    <span class="language-icon" aria-hidden="true">🌐</span>
-                    <label class="sr-only" for="langSelect">Language</label>
-                    <select id="langSelect"></select>
-                </div>
-            </header>
-
-            <section class="filters filter-card" aria-label="Model filters">
-                <div
-                    class="filter-group range-filter"
-                    role="group"
-                    aria-labelledby="context-filter-label"
-                >
-                    <span class="filter-label" id="context-filter-label" data-i18n="contextLabel">Context</span>
-                    <div class="range-row">
-                        <select id="ctxMin"></select>
-                        <span class="range-sep" aria-hidden="true">~</span>
-                        <select id="ctxMax"></select>
-                    </div>
-                </div>
-                <div
-                    class="filter-group range-filter"
-                    role="group"
-                    aria-labelledby="input-price-filter-label"
-                >
-                    <span class="filter-label" id="input-price-filter-label" data-i18n="inPriceLabel">Input price</span>
-                    <div class="range-row">
-                        <select id="inPriceMin"></select>
-                        <span class="range-sep" aria-hidden="true">~</span>
-                        <select id="inPriceMax"></select>
-                    </div>
-                </div>
-                <div
-                    class="filter-group range-filter"
-                    role="group"
-                    aria-labelledby="output-price-filter-label"
-                >
-                    <span class="filter-label" id="output-price-filter-label" data-i18n="outPriceLabel">Output price</span>
-                    <div class="range-row">
-                        <select id="outPriceMin"></select>
-                        <span class="range-sep" aria-hidden="true">~</span>
-                        <select id="outPriceMax"></select>
-                    </div>
-                </div>
-                <div
-                    class="filter-group modality-filter"
-                    role="group"
-                    aria-labelledby="input-modality-filter-label"
-                >
-                    <span class="filter-label" id="input-modality-filter-label" data-i18n="inputModalityLabel">Input modalities</span>
-                    <div class="modality-body" id="inputModalityBody"></div>
-                </div>
-                <div
-                    class="filter-group modality-filter"
-                    role="group"
-                    aria-labelledby="output-modality-filter-label"
-                >
-                    <span class="filter-label" id="output-modality-filter-label" data-i18n="outputModalityLabel">Output modalities</span>
-                    <div class="modality-body" id="outputModalityBody"></div>
-                </div>
-                <div
-                    class="filter-group params-filter"
-                    role="group"
-                    aria-labelledby="params-filter-label"
-                >
-                    <div class="filter-label" id="params-filter-label">
-                        <span data-i18n="paramsLabel">Supported params</span>
-                        <span id="paramCount"></span>
-                    </div>
-                    <div class="params-body" id="paramsBody"></div>
-                </div>
-            </section>
-
-            <section class="results-section" aria-label="Filtered models">
-                <div class="stats" role="status" aria-live="polite">
-                    <span class="stats-primary">
-                        <span data-i18n="matched">Matched</span>
-                        <strong id="count">-</strong>
-                        <span data-i18n="models">models</span>
-                    </span>
-                    <span id="totalCount"
-                        >(<span data-i18n="loading">Loading...</span>)</span
-                    >
-                </div>
-
-                <div class="table-card">
-                    <div class="table-scroll">
-                        <table aria-label="OpenRouter models">
-                            <caption class="sr-only">OpenRouter models</caption>
-                            <thead>
-                                <tr>
-                                    <th data-sort="name" scope="col">
-                                        <button class="table-sort" type="button">
-                                            <span data-i18n="colName">Name</span>
-                                            <span class="sort" id="s-name" aria-hidden="true">▲</span>
-                                        </button>
-                                    </th>
-                                    <th data-sort="id" scope="col">
-                                        <button class="table-sort" type="button">
-                                            <span>ID</span>
-                                            <span class="sort" id="s-id" aria-hidden="true">▲</span>
-                                        </button>
-                                    </th>
-                                    <th data-sort="context" scope="col">
-                                        <button class="table-sort" type="button">
-                                            <span data-i18n="colContext">Context</span>
-                                            <span class="sort" id="s-context" aria-hidden="true">▲</span>
-                                        </button>
-                                    </th>
-                                    <th data-sort="prompt" scope="col">
-                                        <button class="table-sort" type="button">
-                                            <span data-i18n="colInputPrice">Input price</span>
-                                            <span class="sort" id="s-prompt" aria-hidden="true">▲</span>
-                                        </button>
-                                    </th>
-                                    <th data-sort="completion" scope="col">
-                                        <button class="table-sort" type="button">
-                                            <span data-i18n="colOutputPrice">Output price</span>
-                                            <span class="sort" id="s-completion" aria-hidden="true">▲</span>
-                                        </button>
-                                    </th>
-                                    <th data-sort="maxOutput" scope="col">
-                                        <button class="table-sort" type="button">
-                                            <span data-i18n="colMaxOutput">Max Output</span>
-                                            <span class="sort" id="s-maxOutput" aria-hidden="true">▲</span>
-                                        </button>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <script src="state.js"></script>
-        <script src="utils.js"></script>
-        <script src="i18n.js"></script>
-        <script src="app.js"></script>
-    </body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Find OpenRouter models by price, context, modality, and supported parameters."
+    />
+    <link rel="icon" href="data:," />
+    <title>OpenRouter Model Filter</title>
+  </head>
+  <body>
+    <noscript
+      >This site requires JavaScript to load the model catalog.</noscript
+    >
+    <a
+      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:p-3"
+      href="#main"
+      >Skip to content</a
+    >
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
