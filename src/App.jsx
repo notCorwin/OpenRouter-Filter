@@ -85,7 +85,7 @@ import {
   filterModels,
   formatContext,
   formatPrice,
-  modelModalities,
+  modelCapabilities,
   normalizeCatalog,
   pricePerMillion,
   sortModels,
@@ -132,39 +132,48 @@ const MODALITY_ICONS = {
 };
 
 function ModelModalities({ model, t }) {
+  const capabilities = modelCapabilities(model);
+  const missing = [
+    !capabilities.some(({ input }) => input) && "input",
+    !capabilities.some(({ output }) => output) && "output",
+  ].filter(Boolean);
+  const entries = capabilities.length
+    ? [...capabilities, ...missing.map((direction) => ({ direction }))]
+    : [{ direction: null }];
   return (
-    <div className="flex flex-col gap-1">
-      {[
-        ["input", t.modalityInput],
-        ["output", t.modalityOutput],
-      ].map(([direction, label]) => {
-        const values = modelModalities(model, direction);
+    <div className="flex flex-wrap gap-1">
+      {entries.map(({ modality, input, output, direction }) => {
+        const knownIcon = Object.hasOwn(MODALITY_ICONS, modality);
+        const Icon = knownIcon ? MODALITY_ICONS[modality] : CircleHelp;
+        const name = modality
+          ? Object.hasOwn(t.optionLabels, modality)
+            ? t.optionLabels[modality]
+            : modality
+          : t.unknown;
+        const label = modality
+          ? [input && t.modalityInput, output && t.modalityOutput]
+              .filter(Boolean)
+              .join("/")
+          : direction
+            ? `${direction === "input" ? t.modalityInput : t.modalityOutput}?`
+            : t.unknown;
+        const description = modality
+          ? `${name}: ${[input && t.inputModalityLabel, output && t.outputModalityLabel].filter(Boolean).join(", ")}`
+          : `${direction === "input" ? t.inputModalityLabel : direction === "output" ? t.outputModalityLabel : t.colModalities}: ${t.unknown}`;
         return (
-          <div key={direction} className="flex items-center gap-1">
-            <span className="w-8 shrink-0 text-xs text-muted-foreground">
-              {label}
-            </span>
-            <span className="flex flex-wrap gap-1">
-              {(values.length ? values : [null]).map((value) => {
-                const Icon = MODALITY_ICONS[value] || CircleHelp;
-                const name = value ? t.optionLabels[value] || value : t.unknown;
-                return (
-                  <span
-                    key={value || "unknown"}
-                    role="img"
-                    aria-label={name}
-                    title={name}
-                    className="inline-flex min-h-6 items-center gap-1 rounded-md border border-border px-1 text-muted-foreground"
-                  >
-                    <Icon aria-hidden="true" className="size-4 shrink-0" />
-                    {value && !MODALITY_ICONS[value] && (
-                      <span className="max-w-24 truncate text-xs">{value}</span>
-                    )}
-                  </span>
-                );
-              })}
-            </span>
-          </div>
+          <span
+            key={modality || direction || "unknown"}
+            role="img"
+            aria-label={description}
+            title={description}
+            className="inline-flex min-h-6 items-center gap-1 rounded-md border border-border px-1 text-muted-foreground"
+          >
+            <Icon aria-hidden="true" className="size-4 shrink-0" />
+            {modality && !knownIcon && (
+              <span className="max-w-24 truncate text-xs">{modality}</span>
+            )}
+            <span className="text-xs text-foreground">{label}</span>
+          </span>
         );
       })}
     </div>
@@ -344,7 +353,10 @@ function ChoiceField({
       >
         {values.map((value) => {
           const id = `${idPrefix}-${value}`;
-          const description = descriptions?.[value];
+          const description =
+            descriptions && Object.hasOwn(descriptions, value)
+              ? descriptions[value]
+              : undefined;
           return (
             <Field
               orientation="horizontal"
@@ -366,10 +378,11 @@ function ChoiceField({
                   className="w-auto min-w-0 cursor-pointer text-sm font-normal leading-tight"
                   title={value}
                 >
-                  {labels[value] ||
-                    value
-                      .replaceAll("_", " ")
-                      .replace(/\b\w/g, (letter) => letter.toUpperCase())}
+                  {Object.hasOwn(labels, value)
+                    ? labels[value]
+                    : value
+                        .replaceAll("_", " ")
+                        .replace(/\b\w/g, (letter) => letter.toUpperCase())}
                 </FieldLabel>
                 {description && (
                   <FieldDescription

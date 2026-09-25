@@ -5,6 +5,7 @@ import {
   defaultFilters,
   displayModelName,
   filterModels,
+  modelCapabilities,
   modelModalities,
   normalizeCatalog,
   sortModels,
@@ -125,6 +126,12 @@ test("modality display and filtering share a safe source for missing and new val
     "future",
   ]);
   assert.deepEqual(modelModalities(model, "output"), ["text", "image"]);
+  assert.deepEqual(modelCapabilities(model), [
+    { modality: "text", input: true, output: true },
+    { modality: "image", input: false, output: true },
+    { modality: "audio", input: true, output: false },
+    { modality: "future", input: true, output: false },
+  ]);
   assert.deepEqual(
     modelModalities(
       { architecture: { input_modalities: [] }, input_modalities: ["text"] },
@@ -133,6 +140,17 @@ test("modality display and filtering share a safe source for missing and new val
     [],
   );
   assert.deepEqual(modelModalities({}, "output"), []);
+  assert.deepEqual(modelCapabilities({}), []);
+  assert.deepEqual(
+    modelCapabilities({
+      input_modalities: ["constructor"],
+      output_modalities: ["text"],
+    }),
+    [
+      { modality: "text", input: false, output: true },
+      { modality: "constructor", input: true, output: false },
+    ],
+  );
   const options = catalogOptions([model]);
   assert.deepEqual(options.inputModalities, ["text", "audio", "future"]);
   const filters = {

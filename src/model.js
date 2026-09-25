@@ -15,6 +15,10 @@ export function pricePerMillion(value) {
 }
 
 const modalityOrder = { text: 0, image: 1, audio: 2, video: 3, file: 4 };
+const compareModalities = (a, b) =>
+  (Object.hasOwn(modalityOrder, a) ? modalityOrder[a] : 99) -
+    (Object.hasOwn(modalityOrder, b) ? modalityOrder[b] : 99) ||
+  a.localeCompare(b);
 
 export function modelModalities(model, direction) {
   const fromArchitecture = model.architecture?.[`${direction}_modalities`];
@@ -30,10 +34,19 @@ export function modelModalities(model, direction) {
         typeof value === "string" && value.trim() ? [value.trim()] : [],
       ),
     ),
-  ].sort(
-    (a, b) =>
-      (modalityOrder[a] ?? 99) - (modalityOrder[b] ?? 99) || a.localeCompare(b),
-  );
+  ].sort(compareModalities);
+}
+
+export function modelCapabilities(model) {
+  const input = modelModalities(model, "input");
+  const output = modelModalities(model, "output");
+  return [...new Set([...input, ...output])]
+    .sort(compareModalities)
+    .map((modality) => ({
+      modality,
+      input: input.includes(modality),
+      output: output.includes(modality),
+    }));
 }
 
 export function catalogOptions(models) {
@@ -41,11 +54,7 @@ export function catalogOptions(models) {
   const modalities = (direction) =>
     [
       ...new Set(models.flatMap((model) => modelModalities(model, direction))),
-    ].sort(
-      (a, b) =>
-        (modalityOrder[a] ?? 99) - (modalityOrder[b] ?? 99) ||
-        a.localeCompare(b),
-    );
+    ].sort(compareModalities);
   return {
     contexts: unique([
       256_000,
