@@ -71,7 +71,6 @@ import {
 } from "@/components/ui/table";
 import { DEFAULT_LOCALE, I18N, LOCALES } from "./i18n.js";
 import {
-  PAGE_SIZE,
   catalogOptions,
   defaultFilters,
   filterModels,
@@ -199,13 +198,13 @@ function ChoiceField({
         {title}
         {count && <Badge variant="secondary">{values.length}</Badge>}
       </FieldLegend>
-      <FieldGroup className="grid max-h-36 grid-cols-2 gap-x-2 overflow-y-auto rounded-lg border border-border bg-muted/30 p-2 sm:grid-cols-3 lg:grid-cols-2">
+      <FieldGroup className="flex flex-row flex-wrap gap-x-5 gap-y-1">
         {values.map((value) => {
           const id = `${idPrefix}-${value}`;
           return (
             <Field
               orientation="horizontal"
-              className="min-h-11 min-w-0 gap-2"
+              className="min-h-9 w-auto min-w-0 gap-2"
               key={value}
             >
               <Checkbox
@@ -215,7 +214,7 @@ function ChoiceField({
               />
               <FieldLabel
                 htmlFor={id}
-                className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center text-xs leading-tight break-words"
+                className="w-auto min-w-0 cursor-pointer text-sm font-normal leading-tight"
                 title={value}
               >
                 {labels[value] ||
@@ -235,7 +234,7 @@ function CheckboxField({ id, label, description, checked, onChange }) {
   return (
     <Field
       orientation="horizontal"
-      className="items-center rounded-lg border border-border bg-muted/30 p-3"
+      className="w-auto min-w-0 items-center gap-2"
     >
       <Checkbox
         id={id}
@@ -302,13 +301,9 @@ export default function App() {
     return () => removeEventListener("hashchange", sync);
   }, [options]);
 
-  const update = (patch, resetPage = true) => {
+  const update = (patch) => {
     if (!filters) return;
-    const next = {
-      ...filters,
-      ...patch,
-      page: resetPage ? 1 : (patch.page ?? filters.page),
-    };
+    const next = { ...filters, ...patch };
     setFilters(next);
     const hash = serializeFilters(next);
     if (location.hash.slice(1) !== hash) location.hash = hash;
@@ -325,12 +320,6 @@ export default function App() {
         ? sortModels(filterModels(models, filters), filters.sort, filters.dir)
         : [],
     [filters, models],
-  );
-  const pageCount = Math.max(1, Math.ceil(matches.length / PAGE_SIZE));
-  const currentPage = Math.min(filters?.page || 1, pageCount);
-  const visible = matches.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE,
   );
 
   async function copyId(id) {
@@ -430,7 +419,7 @@ export default function App() {
       )}
 
       {!error && (
-        <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -442,7 +431,7 @@ export default function App() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="lg:hidden"
+                  className="md:hidden"
                   aria-expanded={filtersOpen}
                   aria-controls="filter-content"
                   onClick={() => setFiltersOpen((open) => !open)}
@@ -455,82 +444,85 @@ export default function App() {
               id="filter-content"
               className={cn(
                 "flex flex-col gap-5",
-                !filtersOpen && "hidden lg:flex",
+                !filtersOpen && "hidden md:flex",
               )}
             >
               {filters && options ? (
                 <>
-                  <RangeField
-                    title={t.contextLabel}
-                    prefix="ctx"
-                    min={filters.ctxMin}
-                    max={filters.ctxMax}
-                    options={options.contexts}
-                    onChange={(key, value) => update({ [key]: value })}
-                    t={t}
-                    locale={language}
-                  />
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <RangeField
+                      title={t.contextLabel}
+                      prefix="ctx"
+                      min={filters.ctxMin}
+                      max={filters.ctxMax}
+                      options={options.contexts}
+                      onChange={(key, value) => update({ [key]: value })}
+                      t={t}
+                      locale={language}
+                    />
+                    <RangeField
+                      title={t.inPriceLabel}
+                      prefix="in"
+                      min={filters.inMin}
+                      max={filters.inMax}
+                      options={options.inputPrices}
+                      onChange={(key, value) => update({ [key]: value })}
+                      t={t}
+                      locale={language}
+                      price
+                    />
+                    <RangeField
+                      title={t.outPriceLabel}
+                      prefix="out"
+                      min={filters.outMin}
+                      max={filters.outMax}
+                      options={options.outputPrices}
+                      onChange={(key, value) => update({ [key]: value })}
+                      t={t}
+                      locale={language}
+                      price
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t.priceUnit}</p>
+                  <div className="flex flex-wrap gap-x-8 gap-y-3">
+                    <CheckboxField
+                      id="free"
+                      label={t.includeFree}
+                      description={t.includeFreeDescription}
+                      checked={filters.free}
+                      onChange={(free) => update({ free })}
+                    />
+                    <CheckboxField
+                      id="batch"
+                      label={t.includeBatch}
+                      description={t.includeBatchDescription}
+                      checked={filters.batch}
+                      onChange={(batch) => update({ batch })}
+                    />
+                  </div>
                   <Separator />
-                  <p className="-mb-3 text-xs text-muted-foreground">
-                    {t.priceUnit}
-                  </p>
-                  <RangeField
-                    title={t.inPriceLabel}
-                    prefix="in"
-                    min={filters.inMin}
-                    max={filters.inMax}
-                    options={options.inputPrices}
-                    onChange={(key, value) => update({ [key]: value })}
-                    t={t}
-                    locale={language}
-                    price
-                  />
-                  <RangeField
-                    title={t.outPriceLabel}
-                    prefix="out"
-                    min={filters.outMin}
-                    max={filters.outMax}
-                    options={options.outputPrices}
-                    onChange={(key, value) => update({ [key]: value })}
-                    t={t}
-                    locale={language}
-                    price
-                  />
-                  <CheckboxField
-                    id="free"
-                    label={t.includeFree}
-                    description={t.includeFreeDescription}
-                    checked={filters.free}
-                    onChange={(free) => update({ free })}
-                  />
-                  <CheckboxField
-                    id="batch"
-                    label={t.includeBatch}
-                    description={t.includeBatchDescription}
-                    checked={filters.batch}
-                    onChange={(batch) => update({ batch })}
-                  />
-                  <Separator />
-                  <ChoiceField
-                    idPrefix="in-mod"
-                    title={t.inputModalityLabel}
-                    values={options.inputModalities}
-                    selected={filters.inMods}
-                    onChange={(value, checked) =>
-                      toggleChoice("inMods", value, checked)
-                    }
-                    labels={t.optionLabels}
-                  />
-                  <ChoiceField
-                    idPrefix="out-mod"
-                    title={t.outputModalityLabel}
-                    values={options.outputModalities}
-                    selected={filters.outMods}
-                    onChange={(value, checked) =>
-                      toggleChoice("outMods", value, checked)
-                    }
-                    labels={t.optionLabels}
-                  />
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <ChoiceField
+                      idPrefix="in-mod"
+                      title={t.inputModalityLabel}
+                      values={options.inputModalities}
+                      selected={filters.inMods}
+                      onChange={(value, checked) =>
+                        toggleChoice("inMods", value, checked)
+                      }
+                      labels={t.optionLabels}
+                    />
+                    <ChoiceField
+                      idPrefix="out-mod"
+                      title={t.outputModalityLabel}
+                      values={options.outputModalities}
+                      selected={filters.outMods}
+                      onChange={(value, checked) =>
+                        toggleChoice("outMods", value, checked)
+                      }
+                      labels={t.optionLabels}
+                    />
+                  </div>
                   <Separator />
                   <ChoiceField
                     idPrefix="param"
@@ -553,7 +545,7 @@ export default function App() {
               )}
             </CardContent>
             <CardFooter
-              className={cn("justify-end", !filtersOpen && "hidden lg:flex")}
+              className={cn("justify-end", !filtersOpen && "hidden md:flex")}
             >
               <Button
                 variant="ghost"
@@ -593,7 +585,7 @@ export default function App() {
                   disabled={!filters}
                 />
               </Field>
-              <div className="flex items-center gap-2 sm:hidden">
+              <div className="flex items-center gap-2 lg:hidden">
                 <label
                   htmlFor="mobile-sort"
                   className="shrink-0 text-xs text-muted-foreground"
@@ -657,9 +649,9 @@ export default function App() {
                 </Empty>
               ) : (
                 <>
-                  <ItemGroup className="gap-2 px-3 sm:hidden">
+                  <ItemGroup className="gap-2 px-3 lg:hidden">
                     {models
-                      ? visible.map((model) => {
+                      ? matches.map((model) => {
                           const input = pricePerMillion(model.pricing?.prompt);
                           const output = pricePerMillion(
                             model.pricing?.completion,
@@ -734,7 +726,7 @@ export default function App() {
                           </Item>
                         ))}
                   </ItemGroup>
-                  <div className="hidden sm:block">
+                  <div className="hidden lg:block">
                     <Table className="min-w-[760px] tabular-nums">
                       <TableHeader>
                         <TableRow>
@@ -782,7 +774,7 @@ export default function App() {
                       </TableHeader>
                       <TableBody>
                         {models
-                          ? visible.map((model) => {
+                          ? matches.map((model) => {
                               const input = pricePerMillion(
                                 model.pricing?.prompt,
                               );
@@ -866,33 +858,12 @@ export default function App() {
                 </>
               )}
             </CardContent>
-            <CardFooter className="flex flex-wrap justify-between gap-3 text-xs text-muted-foreground">
+            <CardFooter className="text-xs text-muted-foreground">
               <span aria-live="polite">
                 {models
-                  ? `${t.showing} ${matches.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0}–${Math.min(currentPage * PAGE_SIZE, matches.length)} ${t.of} ${matches.length.toLocaleString(language)}`
+                  ? `${matches.length.toLocaleString(language)} ${t.models}`
                   : t.loading}
               </span>
-              <div className="flex items-center gap-2">
-                <span>
-                  {t.page} {currentPage} / {pageCount}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!filters || currentPage <= 1}
-                  onClick={() => update({ page: currentPage - 1 }, false)}
-                >
-                  {t.previous}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!filters || currentPage >= pageCount}
-                  onClick={() => update({ page: currentPage + 1 }, false)}
-                >
-                  {t.next}
-                </Button>
-              </div>
             </CardFooter>
           </Card>
         </div>

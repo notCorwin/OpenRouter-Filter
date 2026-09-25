@@ -83,13 +83,13 @@ test("catalog filtering keeps paid minimums separate from the free toggle and ex
   );
   assert.equal(filterModels(models, { ...defaults, ctxMin: "0" }).length, 3);
   const restored = readFilters(
-    `#${serializeFilters({ ...defaults, free: true, batch: true, query: "paid", page: 2 })}`,
+    `#${serializeFilters({ ...defaults, free: true, batch: true, query: "paid" })}`,
     options,
   );
   assert.equal(restored.free, true);
   assert.equal(restored.batch, true);
   assert.equal(restored.query, "paid");
-  assert.equal(restored.page, 2);
+  assert.equal(serializeFilters(restored).includes("page="), false);
   assert.equal(I18N.en.optionLabels.response_format, "Response Format");
   assert.equal(I18N["zh-CN"].optionLabels.response_format, "响应格式");
 });

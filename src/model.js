@@ -1,5 +1,3 @@
-export const PAGE_SIZE = 40;
-
 export function normalizeCatalog(payload) {
   const catalog = payload?.data || payload;
   if (!Array.isArray(catalog)) throw new Error("Invalid model catalog");
@@ -70,7 +68,6 @@ export function defaultFilters(options) {
     query: "",
     sort: "completion",
     dir: "asc",
-    page: 1,
   };
 }
 
@@ -110,7 +107,6 @@ export function readFilters(hash, options) {
       ? params.get("sort")
       : defaults.sort,
     dir: params.get("dir") === "desc" ? "desc" : "asc",
-    page: Math.max(1, Number.parseInt(params.get("page") || "1", 10) || 1),
   };
 }
 
@@ -129,7 +125,6 @@ export function serializeFilters(filters) {
     "query",
     "sort",
     "dir",
-    "page",
   ]) {
     params.set(
       key,
