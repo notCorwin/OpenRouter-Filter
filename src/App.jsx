@@ -881,7 +881,11 @@ export default function App() {
                           {columns.map(([key, label]) => (
                             <TableHead
                               key={key}
-                              className="text-center"
+                              className={
+                                key === "name" || key === "id"
+                                  ? "text-left"
+                                  : "text-right"
+                              }
                               aria-sort={
                                 filters?.sort === key
                                   ? filters.dir === "asc"
@@ -893,7 +897,12 @@ export default function App() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="w-full justify-center"
+                                className={cn(
+                                  "w-full px-0",
+                                  key === "name" || key === "id"
+                                    ? "justify-start"
+                                    : "justify-end",
+                                )}
                                 title={`${t.sortBy}: ${label}`}
                                 disabled={!filters}
                                 onClick={() =>
@@ -907,16 +916,13 @@ export default function App() {
                                   })
                                 }
                               >
-                                <span className="relative">
-                                  {label}
-                                  {filters?.sort === key ? (
-                                    filters.dir === "asc" ? (
-                                      <ArrowUp className="absolute top-1/2 left-full ml-1 -translate-y-1/2" />
-                                    ) : (
-                                      <ArrowDown className="absolute top-1/2 left-full ml-1 -translate-y-1/2" />
-                                    )
-                                  ) : null}
-                                </span>
+                                {filters?.sort === key &&
+                                  (filters.dir === "asc" ? (
+                                    <ArrowUp aria-hidden="true" />
+                                  ) : (
+                                    <ArrowDown aria-hidden="true" />
+                                  ))}
+                                {label}
                               </Button>
                             </TableHead>
                           ))}
@@ -933,7 +939,7 @@ export default function App() {
                               );
                               return (
                                 <TableRow key={model.id}>
-                                  <TableCell className="max-w-52 text-center whitespace-normal font-medium break-words">
+                                  <TableCell className="max-w-52 whitespace-normal font-medium break-words">
                                     <CopyText
                                       value={displayModelName(model)}
                                       copyKey={`${model.id}:name`}
@@ -941,11 +947,11 @@ export default function App() {
                                       copiedLabel={t.copied}
                                       copied={copied}
                                       onCopy={copyText}
-                                      className="mx-auto justify-center text-center text-sm"
+                                      className="text-sm"
                                       wrap
                                     />
                                   </TableCell>
-                                  <TableCell className="max-w-56 text-center">
+                                  <TableCell className="max-w-56">
                                     <CopyText
                                       value={model.id}
                                       copyKey={`${model.id}:id`}
@@ -953,13 +959,13 @@ export default function App() {
                                       copiedLabel={t.copied}
                                       copied={copied}
                                       onCopy={copyText}
-                                      className="mx-auto justify-center font-mono text-xs font-normal text-muted-foreground"
+                                      className="font-mono text-xs font-normal text-muted-foreground"
                                     />
                                   </TableCell>
-                                  <TableCell className="text-center font-mono tabular-nums">
+                                  <TableCell className="text-right font-mono tabular-nums">
                                     {formatContext(model.context_length)}
                                   </TableCell>
-                                  <TableCell className="text-center font-mono tabular-nums">
+                                  <TableCell className="text-right font-mono tabular-nums">
                                     {input === 0 ? (
                                       <Badge variant="secondary">
                                         {t.free}
@@ -968,7 +974,7 @@ export default function App() {
                                       formatPrice(input)
                                     )}
                                   </TableCell>
-                                  <TableCell className="text-center font-mono tabular-nums">
+                                  <TableCell className="text-right font-mono tabular-nums">
                                     {output === 0 ? (
                                       <Badge variant="secondary">
                                         {t.free}
@@ -977,7 +983,7 @@ export default function App() {
                                       formatPrice(output)
                                     )}
                                   </TableCell>
-                                  <TableCell className="text-center font-mono tabular-nums">
+                                  <TableCell className="text-right font-mono tabular-nums">
                                     {formatContext(
                                       model.top_provider?.max_completion_tokens,
                                     )}
