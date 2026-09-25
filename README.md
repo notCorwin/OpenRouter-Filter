@@ -2,7 +2,7 @@
 
 A static site for comparing models in the public [OpenRouter catalog](https://openrouter.ai/api/v1/models). Filter by context length, input and output token price, modalities, and supported parameters. Separate checkboxes include free models (either token price is zero) and batch models; both are off by default. Price options start at the lowest nonzero value in each column. OpenRouter native routes are excluded.
 
-The interface uses React, Vite, Tailwind CSS, and shadcn/ui components. Color, radius, and typography tokens live in [src/index.css](src/index.css); dark mode follows the browser setting. Filters, search, and sorting are shareable in the URL hash. All matching models appear in one continuous list. The UI supports English and Simplified Chinese, and Model IDs can be copied with one click.
+The interface uses React, Vite, Tailwind CSS, and shadcn/ui components. Color, radius, and typography tokens live in [src/index.css](src/index.css); dark mode follows the browser setting. Filters and sorting stay on the page without changing the URL. All matching models appear in one continuous list. The UI supports English and Simplified Chinese; click a model name or ID to copy it.
 
 ## Run locally
 
@@ -20,7 +20,7 @@ The [Pages workflow](.github/workflows/pages.yml) builds and publishes `dist/` o
 ## Source
 
 - [src/App.jsx](src/App.jsx): interface, catalog loading, and interactions
-- [src/model.js](src/model.js): filtering, sorting, prices, and URL state
+- [src/model.js](src/model.js): filtering, sorting, and prices
 - [src/i18n.js](src/i18n.js): translated labels
 - [src/index.css](src/index.css): shared shadcn design tokens
 

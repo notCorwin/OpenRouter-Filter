@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import {
   catalogOptions,
   defaultFilters,
+  displayModelName,
   filterModels,
   normalizeCatalog,
-  readFilters,
-  serializeFilters,
+  sortModels,
 } from "./src/model.js";
 import { I18N } from "./src/i18n.js";
 
@@ -68,6 +68,7 @@ test("catalog filtering keeps paid minimums separate from the free toggle and ex
   assert.equal(defaults.ctxMin, "256000");
   assert.equal(options.inputPrices[0], 1);
   assert.equal(options.outputPrices[0], 2);
+  assert.deepEqual(options.inputModalities, ["text"]);
   assert.equal(defaults.batch, false);
   assert.deepEqual(
     filterModels(models, defaults).map((model) => model.id),
@@ -82,14 +83,43 @@ test("catalog filtering keeps paid minimums separate from the free toggle and ex
     ["paid/model", "paid/other", "paid/model:batch"],
   );
   assert.equal(filterModels(models, { ...defaults, ctxMin: "0" }).length, 3);
-  const restored = readFilters(
-    `#${serializeFilters({ ...defaults, free: true, batch: true, query: "paid" })}`,
-    options,
-  );
-  assert.equal(restored.free, true);
-  assert.equal(restored.batch, true);
-  assert.equal(restored.query, "paid");
-  assert.equal(serializeFilters(restored).includes("page="), false);
   assert.equal(I18N.en.optionLabels.response_format, "Response Format");
   assert.equal(I18N["zh-CN"].optionLabels.response_format, "响应格式");
+});
+
+test("modalities put the most useful choices first", () => {
+  const options = catalogOptions([
+    {
+      architecture: {
+        input_modalities: ["file", "audio", "text", "video", "image", "other"],
+        output_modalities: ["audio", "image", "text"],
+      },
+    },
+  ]);
+  assert.deepEqual(options.inputModalities, [
+    "text",
+    "image",
+    "audio",
+    "video",
+    "file",
+    "other",
+  ]);
+  assert.deepEqual(options.outputModalities, ["text", "image", "audio"]);
+});
+
+test("model labels omit the brand prefix while name sorting uses the visible label", () => {
+  const models = [
+    { id: "deepseek/deepseek-v3", name: "DeepSeek: DeepSeek V3" },
+    { id: "qwen/qwen3", name: "Qwen: Qwen3" },
+    { id: "other/model", name: "A Model" },
+  ];
+  assert.equal(displayModelName(models[0]), "DeepSeek V3");
+  assert.equal(displayModelName(models[1]), "Qwen3");
+  assert.equal(displayModelName(models[2]), "A Model");
+  assert.equal(displayModelName({ id: "fallback/model" }), "fallback/model");
+  assert.deepEqual(sortModels(models, "name", "asc").map(displayModelName), [
+    "A Model",
+    "DeepSeek V3",
+    "Qwen3",
+  ]);
 });

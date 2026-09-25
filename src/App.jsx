@@ -4,7 +4,7 @@ import {
   ArrowUp,
   ArrowUpDown,
   Check,
-  Copy,
+  ChevronDown,
   RotateCcw,
   Search,
   SlidersHorizontal,
@@ -48,7 +48,6 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   Item,
-  ItemActions,
   ItemContent,
   ItemDescription,
   ItemFooter,
@@ -56,9 +55,13 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -73,15 +76,46 @@ import { DEFAULT_LOCALE, I18N, LOCALES } from "./i18n.js";
 import {
   catalogOptions,
   defaultFilters,
+  displayModelName,
   filterModels,
   formatContext,
   formatPrice,
   normalizeCatalog,
   pricePerMillion,
-  readFilters,
-  serializeFilters,
   sortModels,
 } from "./model.js";
+
+const COMMON_PARAMETERS = [
+  "tools",
+  "response_format",
+  "reasoning",
+  "max_completion_tokens",
+  "temperature",
+  "top_p",
+];
+
+const ADVANCED_PARAMETERS = [
+  "structured_outputs",
+  "reasoning_effort",
+  "include_reasoning",
+  "max_tokens",
+  "stop",
+  "seed",
+  "tool_choice",
+  "parallel_tool_calls",
+  "web_search_options",
+  "frequency_penalty",
+  "presence_penalty",
+  "repetition_penalty",
+  "top_k",
+  "min_p",
+  "top_a",
+  "logprobs",
+  "top_logprobs",
+  "logit_bias",
+  "prediction",
+  "verbosity",
+];
 
 function initialLanguage() {
   try {
@@ -109,6 +143,72 @@ function copyFallback(value) {
   if (!copied) throw new Error("Clipboard copy failed");
 }
 
+function Picker({ id, label, value, choices, onChange, className, disabled }) {
+  const items = choices.map(([value, label]) => ({ value, label }));
+  return (
+    <Select
+      items={items}
+      value={value}
+      onValueChange={onChange}
+      disabled={disabled}
+    >
+      <SelectTrigger id={id} aria-label={label} className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent
+        alignItemWithTrigger={false}
+        className="max-h-[min(16rem,var(--available-height))]"
+      >
+        <SelectGroup>
+          {items.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  );
+}
+
+function CopyText({
+  value,
+  copyKey,
+  label,
+  copiedLabel,
+  copied,
+  onCopy,
+  className,
+  wrap,
+}) {
+  const done = copied?.key === copyKey;
+  const action = `${done ? copiedLabel : label}: ${value}`;
+  return (
+    <Button
+      type="button"
+      variant="link"
+      size="xs"
+      className={cn(
+        "h-auto min-w-0 max-w-full justify-start px-0 text-left",
+        className,
+      )}
+      aria-label={action}
+      title={action}
+      onClick={() => onCopy(value, copyKey)}
+    >
+      <span
+        className={cn(
+          "min-w-0",
+          wrap ? "whitespace-normal break-words" : "truncate",
+        )}
+      >
+        {value}
+      </span>
+      {done && <Check aria-hidden="true" />}
+    </Button>
+  );
+}
+
 function RangeField({
   title,
   prefix,
@@ -134,25 +234,18 @@ function RangeField({
           >
             {t.min}
           </FieldLabel>
-          <NativeSelect
+          <Picker
             id={`${prefix}-min`}
-            aria-label={`${title}: ${t.min}`}
+            label={`${title}: ${t.min}`}
             className="w-full"
             value={min}
-            onChange={(event) => onChange(`${prefix}Min`, event.target.value)}
-          >
-            {!price && (
-              <NativeSelectOption value="0">{t.unlimited}</NativeSelectOption>
-            )}
-            {price && values.length === 0 && (
-              <NativeSelectOption value="0">$0/M</NativeSelectOption>
-            )}
-            {values.map(([value, label]) => (
-              <NativeSelectOption value={value} key={value}>
-                {label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+            onChange={(value) => onChange(`${prefix}Min`, value)}
+            choices={[
+              ...(!price ? [["0", t.unlimited]] : []),
+              ...(price && values.length === 0 ? [["0", "$0/M"]] : []),
+              ...values,
+            ]}
+          />
         </Field>
         <Field className="min-w-0">
           <FieldLabel
@@ -161,22 +254,14 @@ function RangeField({
           >
             {t.max}
           </FieldLabel>
-          <NativeSelect
+          <Picker
             id={`${prefix}-max`}
-            aria-label={`${title}: ${t.max}`}
+            label={`${title}: ${t.max}`}
             className="w-full"
             value={max}
-            onChange={(event) => onChange(`${prefix}Max`, event.target.value)}
-          >
-            {values.map(([value, label]) => (
-              <NativeSelectOption value={value} key={value}>
-                {label}
-              </NativeSelectOption>
-            ))}
-            <NativeSelectOption value="Infinity">
-              {t.unlimited}
-            </NativeSelectOption>
-          </NativeSelect>
+            onChange={(value) => onChange(`${prefix}Max`, value)}
+            choices={[...values, ["Infinity", t.unlimited]]}
+          />
         </Field>
       </FieldGroup>
     </FieldSet>
@@ -186,42 +271,61 @@ function RangeField({
 function ChoiceField({
   idPrefix,
   title,
+  ariaLabel,
   values,
   selected,
   onChange,
   labels,
-  count,
+  descriptions,
 }) {
   return (
-    <FieldSet className="min-w-0 gap-2">
-      <FieldLegend variant="label" className="flex items-center gap-2">
-        {title}
-        {count && <Badge variant="secondary">{values.length}</Badge>}
-      </FieldLegend>
-      <FieldGroup className="flex flex-row flex-wrap gap-x-5 gap-y-1">
+    <FieldSet className="min-w-0 gap-2" aria-label={ariaLabel}>
+      {title && <FieldLegend variant="label">{title}</FieldLegend>}
+      <FieldGroup
+        className={cn(
+          descriptions
+            ? "grid gap-3 md:grid-cols-2"
+            : "flex flex-row flex-wrap gap-x-5 gap-y-1",
+        )}
+      >
         {values.map((value) => {
           const id = `${idPrefix}-${value}`;
+          const description = descriptions?.[value];
           return (
             <Field
               orientation="horizontal"
-              className="min-h-9 w-auto min-w-0 gap-2"
+              className={cn(
+                "min-w-0 gap-2",
+                descriptions ? "items-start" : "min-h-9 w-auto",
+              )}
               key={value}
             >
               <Checkbox
                 id={id}
                 checked={selected.includes(value)}
                 onCheckedChange={(checked) => onChange(value, checked)}
+                aria-describedby={description ? `${id}-description` : undefined}
               />
-              <FieldLabel
-                htmlFor={id}
-                className="w-auto min-w-0 cursor-pointer text-sm font-normal leading-tight"
-                title={value}
-              >
-                {labels[value] ||
-                  value
-                    .replaceAll("_", " ")
-                    .replace(/\b\w/g, (letter) => letter.toUpperCase())}
-              </FieldLabel>
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <FieldLabel
+                  htmlFor={id}
+                  className="w-auto min-w-0 cursor-pointer text-sm font-normal leading-tight"
+                  title={value}
+                >
+                  {labels[value] ||
+                    value
+                      .replaceAll("_", " ")
+                      .replace(/\b\w/g, (letter) => letter.toUpperCase())}
+                </FieldLabel>
+                {description && (
+                  <FieldDescription
+                    id={`${id}-description`}
+                    className="text-xs leading-snug"
+                  >
+                    {description}
+                  </FieldDescription>
+                )}
+              </div>
             </Field>
           );
         })}
@@ -257,7 +361,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const [filters, setFilters] = useState(null);
-  const [copied, setCopied] = useState("");
+  const [copied, setCopied] = useState(null);
   const [copyError, setCopyError] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const t = I18N[language];
@@ -265,6 +369,21 @@ export default function App() {
     () => (models ? catalogOptions(models) : null),
     [models],
   );
+  const commonParameters = COMMON_PARAMETERS.filter((value) =>
+    options?.parameters.includes(value),
+  );
+  const advancedParameters = [
+    ...ADVANCED_PARAMETERS.filter((value) =>
+      options?.parameters.includes(value),
+    ),
+    ...(options?.parameters.filter(
+      (value) =>
+        !COMMON_PARAMETERS.includes(value) &&
+        !ADVANCED_PARAMETERS.includes(value),
+    ) || []),
+  ];
+  const selectedAdvanced =
+    filters?.params.filter((value) => advancedParameters.includes(value)) || [];
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -294,19 +413,24 @@ export default function App() {
   }, [retry]);
 
   useEffect(() => {
+    const clearHash = () => {
+      if (location.hash) {
+        history.replaceState(null, "", location.pathname + location.search);
+      }
+    };
+    clearHash();
+    addEventListener("hashchange", clearHash);
+    return () => removeEventListener("hashchange", clearHash);
+  }, []);
+
+  useEffect(() => {
     if (!options) return;
-    const sync = () => setFilters(readFilters(location.hash, options));
-    sync();
-    addEventListener("hashchange", sync);
-    return () => removeEventListener("hashchange", sync);
+    setFilters((current) => current ?? defaultFilters(options));
   }, [options]);
 
   const update = (patch) => {
     if (!filters) return;
-    const next = { ...filters, ...patch };
-    setFilters(next);
-    const hash = serializeFilters(next);
-    if (location.hash.slice(1) !== hash) location.hash = hash;
+    setFilters({ ...filters, ...patch });
   };
   const toggleChoice = (key, value, checked) =>
     update({
@@ -322,25 +446,28 @@ export default function App() {
     [filters, models],
   );
 
-  async function copyId(id) {
+  async function copyText(value, key) {
     try {
       if (navigator.clipboard?.writeText)
-        await navigator.clipboard.writeText(id);
-      else copyFallback(id);
-      setCopied(id);
+        await navigator.clipboard.writeText(value);
+      else copyFallback(value);
+      setCopied({ key, value });
       setCopyError("");
       setTimeout(
-        () => setCopied((current) => (current === id ? "" : current)),
+        () => setCopied((current) => (current?.key === key ? null : current)),
         1600,
       );
     } catch {
       try {
-        copyFallback(id);
-        setCopied(id);
+        copyFallback(value);
+        setCopied({ key, value });
         setCopyError("");
-        setTimeout(() => setCopied(""), 1600);
+        setTimeout(
+          () => setCopied((current) => (current?.key === key ? null : current)),
+          1600,
+        );
       } catch {
-        setCopied("");
+        setCopied(null);
         setCopyError(t.copyFailed);
       }
     }
@@ -366,9 +493,6 @@ export default function App() {
             <Search aria-hidden="true" />
           </div>
           <div className="min-w-0">
-            <Badge variant="outline" className="mb-2">
-              {t.eyebrow}
-            </Badge>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               {t.title}
             </h1>
@@ -381,19 +505,13 @@ export default function App() {
           <label htmlFor="language" className="sr-only">
             Language
           </label>
-          <NativeSelect
+          <Picker
             id="language"
+            label="Language"
             value={language}
-            onChange={(event) => setLanguage(event.target.value)}
-            aria-label="Language"
-          >
-            {Object.entries(LOCALES).map(([code, label]) => (
-              <NativeSelectOption key={code} value={code}>
-                {label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-          <span className="text-xs text-muted-foreground">{t.themeSystem}</span>
+            onChange={setLanguage}
+            choices={Object.entries(LOCALES)}
+          />
         </div>
       </header>
 
@@ -483,7 +601,6 @@ export default function App() {
                       price
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">{t.priceUnit}</p>
                   <div className="flex flex-wrap gap-x-8 gap-y-3">
                     <CheckboxField
                       id="free"
@@ -527,14 +644,45 @@ export default function App() {
                   <ChoiceField
                     idPrefix="param"
                     title={t.paramsLabel}
-                    values={options.parameters}
+                    values={commonParameters}
                     selected={filters.params}
                     onChange={(value, checked) =>
                       toggleChoice("params", value, checked)
                     }
                     labels={t.optionLabels}
-                    count
                   />
+                  {advancedParameters.length > 0 && (
+                    <details className="group">
+                      <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                        {t.advancedParamsLabel}
+                        <Badge variant="secondary">
+                          {advancedParameters.length}
+                        </Badge>
+                        {selectedAdvanced.length > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {t.selectedCount} {selectedAdvanced.length}
+                          </span>
+                        )}
+                        <ChevronDown
+                          aria-hidden="true"
+                          className="size-4 transition-transform group-open:rotate-180"
+                        />
+                      </summary>
+                      <div className="pt-3">
+                        <ChoiceField
+                          idPrefix="param"
+                          ariaLabel={t.advancedParamsLabel}
+                          values={advancedParameters}
+                          selected={filters.params}
+                          onChange={(value, checked) =>
+                            toggleChoice("params", value, checked)
+                          }
+                          labels={t.optionLabels}
+                          descriptions={t.parameterDescriptions}
+                        />
+                      </div>
+                    </details>
+                  )}
                 </>
               ) : (
                 <div className="flex flex-col gap-4">
@@ -592,19 +740,15 @@ export default function App() {
                 >
                   {t.sortBy}
                 </label>
-                <NativeSelect
+                <Picker
                   id="mobile-sort"
+                  label={t.sortBy}
                   className="min-w-0 flex-1"
                   value={filters?.sort || "completion"}
-                  onChange={(event) => update({ sort: event.target.value })}
+                  onChange={(value) => update({ sort: value })}
                   disabled={!filters}
-                >
-                  {columns.map(([key, label]) => (
-                    <NativeSelectOption key={key} value={key}>
-                      {label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
+                  choices={columns}
+                />
                 <Button
                   variant="outline"
                   size="icon"
@@ -665,26 +809,31 @@ export default function App() {
                             >
                               <ItemContent className="min-w-0">
                                 <ItemTitle className="max-w-full">
-                                  {model.name || model.id}
+                                  <CopyText
+                                    value={displayModelName(model)}
+                                    copyKey={`${model.id}:name`}
+                                    label={t.copyName}
+                                    copiedLabel={t.copied}
+                                    copied={copied}
+                                    onCopy={copyText}
+                                    className="text-sm"
+                                  />
                                 </ItemTitle>
                                 <ItemDescription
-                                  className="truncate font-mono text-xs"
-                                  title={model.id}
+                                  className="min-w-0"
                                   translate="no"
                                 >
-                                  {model.id}
+                                  <CopyText
+                                    value={model.id}
+                                    copyKey={`${model.id}:id`}
+                                    label={t.copyId}
+                                    copiedLabel={t.copied}
+                                    copied={copied}
+                                    onCopy={copyText}
+                                    className="font-mono text-xs font-normal text-muted-foreground"
+                                  />
                                 </ItemDescription>
                               </ItemContent>
-                              <ItemActions>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  aria-label={`${copied === model.id ? t.copied : t.copyId}: ${model.id}`}
-                                  onClick={() => copyId(model.id)}
-                                >
-                                  {copied === model.id ? <Check /> : <Copy />}
-                                </Button>
-                              </ItemActions>
                               <ItemFooter className="grid grid-cols-2 gap-2 border-t border-border pt-2 text-xs tabular-nums">
                                 {[
                                   [
@@ -733,6 +882,9 @@ export default function App() {
                           {columns.map(([key, label]) => (
                             <TableHead
                               key={key}
+                              className={cn(
+                                key !== "name" && key !== "id" && "text-center",
+                              )}
                               aria-sort={
                                 filters?.sort === key
                                   ? filters.dir === "asc"
@@ -744,7 +896,12 @@ export default function App() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="w-full justify-start"
+                                className={cn(
+                                  "w-full",
+                                  key === "name" || key === "id"
+                                    ? "justify-start"
+                                    : "justify-center",
+                                )}
                                 disabled={!filters}
                                 onClick={() =>
                                   update({
@@ -784,40 +941,32 @@ export default function App() {
                               return (
                                 <TableRow key={model.id}>
                                   <TableCell className="max-w-52 whitespace-normal font-medium break-words">
-                                    {model.name || model.id}
+                                    <CopyText
+                                      value={displayModelName(model)}
+                                      copyKey={`${model.id}:name`}
+                                      label={t.copyName}
+                                      copiedLabel={t.copied}
+                                      copied={copied}
+                                      onCopy={copyText}
+                                      className="text-sm"
+                                      wrap
+                                    />
                                   </TableCell>
                                   <TableCell className="max-w-56">
-                                    <div className="flex min-w-0 items-center gap-1">
-                                      <span
-                                        className="min-w-0 truncate font-mono text-xs text-muted-foreground"
-                                        title={model.id}
-                                        translate="no"
-                                      >
-                                        {model.id}
-                                      </span>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        aria-label={`${copied === model.id ? t.copied : t.copyId}: ${model.id}`}
-                                        title={
-                                          copied === model.id
-                                            ? t.copied
-                                            : t.copyId
-                                        }
-                                        onClick={() => copyId(model.id)}
-                                      >
-                                        {copied === model.id ? (
-                                          <Check />
-                                        ) : (
-                                          <Copy />
-                                        )}
-                                      </Button>
-                                    </div>
+                                    <CopyText
+                                      value={model.id}
+                                      copyKey={`${model.id}:id`}
+                                      label={t.copyId}
+                                      copiedLabel={t.copied}
+                                      copied={copied}
+                                      onCopy={copyText}
+                                      className="font-mono text-xs font-normal text-muted-foreground"
+                                    />
                                   </TableCell>
-                                  <TableCell className="font-mono tabular-nums">
+                                  <TableCell className="text-center font-mono tabular-nums">
                                     {formatContext(model.context_length)}
                                   </TableCell>
-                                  <TableCell className="font-mono tabular-nums">
+                                  <TableCell className="text-center font-mono tabular-nums">
                                     {input === 0 ? (
                                       <Badge variant="secondary">
                                         {t.free}
@@ -826,7 +975,7 @@ export default function App() {
                                       formatPrice(input)
                                     )}
                                   </TableCell>
-                                  <TableCell className="font-mono tabular-nums">
+                                  <TableCell className="text-center font-mono tabular-nums">
                                     {output === 0 ? (
                                       <Badge variant="secondary">
                                         {t.free}
@@ -835,7 +984,7 @@ export default function App() {
                                       formatPrice(output)
                                     )}
                                   </TableCell>
-                                  <TableCell className="font-mono tabular-nums">
+                                  <TableCell className="text-center font-mono tabular-nums">
                                     {formatContext(
                                       model.top_provider?.max_completion_tokens,
                                     )}
@@ -869,7 +1018,7 @@ export default function App() {
         </div>
       )}
       <span className="sr-only" role="status" aria-live="polite">
-        {copied ? `${t.copied}: ${copied}` : copyError}
+        {copied ? `${t.copied}: ${copied.value}` : copyError}
       </span>
     </main>
   );

@@ -16,6 +16,7 @@ export function pricePerMillion(value) {
 
 export function catalogOptions(models) {
   const unique = (values) => [...new Set(values)].sort((a, b) => a - b);
+  const modalityOrder = { text: 0, image: 1, audio: 2, video: 3, file: 4 };
   const modalities = (direction) =>
     [
       ...new Set(
@@ -26,7 +27,11 @@ export function catalogOptions(models) {
             [],
         ),
       ),
-    ].sort();
+    ].sort(
+      (a, b) =>
+        (modalityOrder[a] ?? 99) - (modalityOrder[b] ?? 99) ||
+        a.localeCompare(b),
+    );
   return {
     contexts: unique([
       256_000,
@@ -69,73 +74,6 @@ export function defaultFilters(options) {
     sort: "completion",
     dir: "asc",
   };
-}
-
-export function readFilters(hash, options) {
-  const defaults = defaultFilters(options);
-  const params = new URLSearchParams(hash.replace(/^#/, ""));
-  const select = (key, allowed) =>
-    allowed.includes(params.get(key)) ? params.get(key) : defaults[key];
-  const values = (key, allowed) =>
-    params.has(key)
-      ? params
-          .get(key)
-          .split(",")
-          .filter((v) => allowed.includes(v))
-      : defaults[key];
-  return {
-    ctxMin: select("ctxMin", ["0", ...options.contexts.map(String)]),
-    ctxMax: select("ctxMax", [...options.contexts.map(String), "Infinity"]),
-    inMin: select("inMin", options.inputPrices.map(String)),
-    inMax: select("inMax", [...options.inputPrices.map(String), "Infinity"]),
-    outMin: select("outMin", options.outputPrices.map(String)),
-    outMax: select("outMax", [...options.outputPrices.map(String), "Infinity"]),
-    free: params.get("free") === "1",
-    batch: params.get("batch") === "1",
-    inMods: values("inMods", options.inputModalities),
-    outMods: values("outMods", options.outputModalities),
-    params: values("params", options.parameters),
-    query: params.get("query") || "",
-    sort: [
-      "name",
-      "id",
-      "context",
-      "prompt",
-      "completion",
-      "maxOutput",
-    ].includes(params.get("sort"))
-      ? params.get("sort")
-      : defaults.sort,
-    dir: params.get("dir") === "desc" ? "desc" : "asc",
-  };
-}
-
-export function serializeFilters(filters) {
-  const params = new URLSearchParams();
-  for (const key of [
-    "ctxMin",
-    "ctxMax",
-    "inMin",
-    "inMax",
-    "outMin",
-    "outMax",
-    "inMods",
-    "outMods",
-    "params",
-    "query",
-    "sort",
-    "dir",
-  ]) {
-    params.set(
-      key,
-      Array.isArray(filters[key])
-        ? filters[key].join(",")
-        : String(filters[key]),
-    );
-  }
-  params.set("free", filters.free ? "1" : "0");
-  params.set("batch", filters.batch ? "1" : "0");
-  return params.toString();
 }
 
 export function filterModels(models, filters) {
@@ -188,10 +126,14 @@ export function filterModels(models, filters) {
   });
 }
 
+export function displayModelName(model) {
+  return (model.name || model.id).replace(/^[^:]+:\s+/, "");
+}
+
 export function sortModels(models, field, dir) {
   const value = (model) =>
     ({
-      name: model.name || "",
+      name: displayModelName(model),
       id: model.id || "",
       context: model.context_length,
       prompt: pricePerMillion(model.pricing?.prompt),
