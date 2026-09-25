@@ -6,7 +6,6 @@ function applyFilter() {
   const inMax = +dom.inPriceMax.value;
   const outMin = +dom.outPriceMin.value;
   const outMax = +dom.outPriceMax.value;
-  const showOR = dom.showOpenRouter.checked;
   const checkedInMods = [
     ...document.querySelectorAll(".input-modality-cb:checked"),
   ].map((el) => el.value);
@@ -18,8 +17,6 @@ function applyFilter() {
   );
 
   const filtered = allModels.filter((m) => {
-    if (!showOR && m.id.startsWith("openrouter/")) return false;
-
     const inputMods =
       m.architecture?.input_modalities || m.input_modalities || [];
     const outputMods =
@@ -77,7 +74,6 @@ function saveFilterState() {
   if (dom.inPriceMax) p.set("inMax", dom.inPriceMax.value);
   if (dom.outPriceMin) p.set("outMin", dom.outPriceMin.value);
   if (dom.outPriceMax) p.set("outMax", dom.outPriceMax.value);
-  if (dom.showOpenRouter) p.set("or", dom.showOpenRouter.checked ? "1" : "0");
   const checkedIn = [
     ...document.querySelectorAll(".input-modality-cb:checked"),
   ].map((el) => el.value);
@@ -104,8 +100,6 @@ function loadFilterState() {
   setVal("inPriceMax", "inMax");
   setVal("outPriceMin", "outMin");
   setVal("outPriceMax", "outMax");
-  if (p.has("or") && dom.showOpenRouter)
-    dom.showOpenRouter.checked = p.get("or") === "1";
   if (p.has("inMods")) {
     const checked = new Set(p.get("inMods").split(","));
     document.querySelectorAll(".input-modality-cb").forEach((el) => {
@@ -390,7 +384,6 @@ function bindEvents() {
     "outPriceMax",
   ].forEach((id) => dom[id].addEventListener("change", applyFilter));
 
-  dom.showOpenRouter.addEventListener("change", applyFilter);
   dom.inputModalityBody.addEventListener("change", applyFilter);
   dom.outputModalityBody.addEventListener("change", applyFilter);
 
@@ -422,7 +415,7 @@ async function load() {
   try {
     const r = await fetch("https://openrouter.ai/api/v1/models");
     const j = await r.json();
-    allModels = j.data || j;
+    allModels = (j.data || j).filter((m) => !m.id.startsWith("openrouter/"));
 
     updateCounts();
     buildContextSelects();

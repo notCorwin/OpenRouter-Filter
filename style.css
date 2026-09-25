@@ -211,8 +211,7 @@ select:hover {
 }
 
 .range-filter,
-.modality-filter,
-.switch-filter {
+.modality-filter {
     grid-column: span 2;
 }
 
@@ -262,17 +261,6 @@ select:hover {
 .range-sep {
     color: var(--muted-foreground);
     font-size: 12px;
-}
-
-.switch-body {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--space-1) var(--space-2);
-    padding: var(--space-2);
-    border: 1px solid var(--border);
-    border-radius: calc(var(--radius) - 3px);
-    background: var(--muted);
 }
 
 .button {
@@ -336,7 +324,6 @@ select:hover {
     color: var(--accent-foreground);
 }
 
-.checkbox-label,
 .modality-body label,
 .params-body label {
     display: inline-flex;
@@ -583,16 +570,14 @@ tbody tr:hover td {
 
 @media (max-width: 1120px) {
     .range-filter,
-    .modality-filter,
-    .switch-filter {
+    .modality-filter {
         grid-column: span 3;
     }
 }
 
 @media (max-width: 820px) {
     .range-filter,
-    .modality-filter,
-    .switch-filter {
+    .modality-filter {
         grid-column: span 6;
     }
 }
@@ -624,7 +609,6 @@ tbody tr:hover td {
 
     .range-filter,
     .modality-filter,
-    .switch-filter,
     .params-filter {
         grid-column: 1 / -1;
     }

@@ -14,7 +14,6 @@ function cacheDom() {
     "inPriceMax",
     "outPriceMin",
     "outPriceMax",
-    "showOpenRouter",
     "paramsBody",
     "paramCount",
     "count",

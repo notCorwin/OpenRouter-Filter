@@ -6,7 +6,7 @@ A dependency-free static page for exploring the public OpenRouter model catalog.
 
 - Loads the current catalog from https://openrouter.ai/api/v1/models.
 - Filters input and output prices in dollars per million tokens.
-- Filters context length, input/output modalities, supported parameters, and OpenRouter-native models.
+- Filters context length, input/output modalities, and supported parameters; OpenRouter-native routes are always excluded.
 - Sorts by model name, model ID, context, price, or maximum output.
 - Copies a model ID with the Clipboard API and a browser fallback.
 - Keeps filter selections in the URL hash so a filtered view can be shared.
