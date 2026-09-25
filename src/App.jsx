@@ -1,18 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  AudioLines,
   ArrowDown,
   ArrowUp,
+  BookOpenText,
   Check,
   ChevronDown,
   CircleHelp,
-  FileText,
-  ImageIcon,
+  Clapperboard,
+  Ear,
+  Eye,
+  FilePlus2,
+  FileSearch,
+  Film,
+  MessageSquareText,
+  Paintbrush,
+  PenLine,
   RotateCcw,
   Search,
   SlidersHorizontal,
-  Type,
-  Video,
+  Volume2,
 } from "lucide-react";
 import {
   Alert,
@@ -123,59 +129,84 @@ const ADVANCED_PARAMETERS = [
   "verbosity",
 ];
 
-const MODALITY_ICONS = {
-  text: Type,
-  image: ImageIcon,
-  audio: AudioLines,
-  video: Video,
-  file: FileText,
+const CAPABILITY_ICONS = {
+  text: { both: MessageSquareText, input: BookOpenText, output: PenLine },
+  image: { input: Eye, output: Paintbrush },
+  audio: { input: Ear, output: Volume2 },
+  video: { input: Film, output: Clapperboard },
+  file: { input: FileSearch, output: FilePlus2 },
 };
 
-function ModelModalities({ model, t }) {
-  const capabilities = modelCapabilities(model);
-  const missing = [
-    !capabilities.some(({ input }) => input) && "input",
-    !capabilities.some(({ output }) => output) && "output",
-  ].filter(Boolean);
-  const entries = capabilities.length
-    ? [...capabilities, ...missing.map((direction) => ({ direction }))]
-    : [{ direction: null }];
+function ModelCapabilities({ model, t }) {
+  const modalities = modelCapabilities(model);
+  const capabilities = modalities.flatMap(({ modality, input, output }) => {
+    if (!Object.hasOwn(CAPABILITY_ICONS, modality)) {
+      return [
+        {
+          key: modality,
+          Icon: CircleHelp,
+          label: `${modality}: ${[input && t.inputModalityLabel, output && t.outputModalityLabel].filter(Boolean).join(", ")}`,
+          text: modality,
+        },
+      ];
+    }
+    const icons = CAPABILITY_ICONS[modality];
+    if (input && output && icons.both) {
+      return [
+        {
+          key: `${modality}-both`,
+          Icon: icons.both,
+          label: t.capabilityLabels[`${modality}Both`],
+        },
+      ];
+    }
+    return [
+      input && {
+        key: `${modality}-input`,
+        Icon: icons.input,
+        label: t.capabilityLabels[`${modality}Input`],
+      },
+      output && {
+        key: `${modality}-output`,
+        Icon: icons.output,
+        label: t.capabilityLabels[`${modality}Output`],
+      },
+    ].filter(Boolean);
+  });
+  if (!modalities.length) {
+    capabilities.push({
+      key: "unknown",
+      Icon: CircleHelp,
+      label: t.capabilityLabels.unknown,
+    });
+  } else {
+    for (const direction of ["input", "output"]) {
+      if (!modalities.some((modality) => modality[direction])) {
+        capabilities.push({
+          key: `unknown-${direction}`,
+          Icon: CircleHelp,
+          label: t.capabilityLabels[`${direction}Unknown`],
+        });
+      }
+    }
+  }
   return (
     <div className="flex flex-wrap gap-1">
-      {entries.map(({ modality, input, output, direction }) => {
-        const knownIcon = Object.hasOwn(MODALITY_ICONS, modality);
-        const Icon = knownIcon ? MODALITY_ICONS[modality] : CircleHelp;
-        const name = modality
-          ? Object.hasOwn(t.optionLabels, modality)
-            ? t.optionLabels[modality]
-            : modality
-          : t.unknown;
-        const label = modality
-          ? [input && t.modalityInput, output && t.modalityOutput]
-              .filter(Boolean)
-              .join("/")
-          : direction
-            ? `${direction === "input" ? t.modalityInput : t.modalityOutput}?`
-            : t.unknown;
-        const description = modality
-          ? `${name}: ${[input && t.inputModalityLabel, output && t.outputModalityLabel].filter(Boolean).join(", ")}`
-          : `${direction === "input" ? t.inputModalityLabel : direction === "output" ? t.outputModalityLabel : t.colModalities}: ${t.unknown}`;
-        return (
-          <span
-            key={modality || direction || "unknown"}
-            role="img"
-            aria-label={description}
-            title={description}
-            className="inline-flex min-h-6 items-center gap-1 rounded-md border border-border px-1 text-muted-foreground"
-          >
-            <Icon aria-hidden="true" className="size-4 shrink-0" />
-            {modality && !knownIcon && (
-              <span className="max-w-24 truncate text-xs">{modality}</span>
-            )}
-            <span className="text-xs text-foreground">{label}</span>
-          </span>
-        );
-      })}
+      {capabilities.map(({ key, Icon, label, text }) => (
+        <span
+          key={key}
+          role="img"
+          aria-label={label}
+          title={label}
+          className={cn(
+            "inline-flex min-h-7 items-center rounded-md border border-border text-muted-foreground",
+            text ? "max-w-full gap-1 px-1" : "size-7 justify-center",
+          )}
+        >
+          <Icon aria-hidden="true" className="size-4 shrink-0" />
+          {text && <span className="max-w-24 truncate text-xs">{text}</span>}
+        </span>
+      ))}
     </div>
   );
 }
@@ -550,7 +581,7 @@ export default function App() {
   ];
   const tableColumns = [
     ...columns.slice(0, 2),
-    ["modalities", t.colModalities],
+    ["capabilities", t.colCapabilities],
     ...columns.slice(2),
   ];
 
@@ -909,9 +940,9 @@ export default function App() {
                               <ItemFooter className="grid grid-cols-2 gap-2 border-t border-border pt-2 text-xs tabular-nums">
                                 <div className="col-span-2 flex items-start justify-between gap-2">
                                   <span className="text-muted-foreground">
-                                    {t.colModalities}
+                                    {t.colCapabilities}
                                   </span>
-                                  <ModelModalities model={model} t={t} />
+                                  <ModelCapabilities model={model} t={t} />
                                 </div>
                                 {[
                                   [
@@ -963,12 +994,12 @@ export default function App() {
                               className={
                                 key === "name" ||
                                 key === "id" ||
-                                key === "modalities"
+                                key === "capabilities"
                                   ? "text-left"
                                   : "text-right"
                               }
                               aria-sort={
-                                key === "modalities"
+                                key === "capabilities"
                                   ? undefined
                                   : filters?.sort === key
                                     ? filters.dir === "asc"
@@ -977,7 +1008,7 @@ export default function App() {
                                     : "none"
                               }
                             >
-                              {key === "modalities" ? (
+                              {key === "capabilities" ? (
                                 label
                               ) : (
                                 <Button
@@ -1050,7 +1081,7 @@ export default function App() {
                                     />
                                   </TableCell>
                                   <TableCell>
-                                    <ModelModalities model={model} t={t} />
+                                    <ModelCapabilities model={model} t={t} />
                                   </TableCell>
                                   <TableCell className="text-right font-mono tabular-nums">
                                     {formatContext(model.context_length)}
