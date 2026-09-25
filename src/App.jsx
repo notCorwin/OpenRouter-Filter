@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  AudioLines,
   ArrowDown,
   ArrowUp,
   Check,
   ChevronDown,
+  CircleHelp,
+  FileText,
+  ImageIcon,
   RotateCcw,
   Search,
   SlidersHorizontal,
+  Type,
+  Video,
 } from "lucide-react";
 import {
   Alert,
@@ -79,6 +85,7 @@ import {
   filterModels,
   formatContext,
   formatPrice,
+  modelModalities,
   normalizeCatalog,
   pricePerMillion,
   sortModels,
@@ -115,6 +122,54 @@ const ADVANCED_PARAMETERS = [
   "prediction",
   "verbosity",
 ];
+
+const MODALITY_ICONS = {
+  text: Type,
+  image: ImageIcon,
+  audio: AudioLines,
+  video: Video,
+  file: FileText,
+};
+
+function ModelModalities({ model, t }) {
+  return (
+    <div className="flex flex-col gap-1">
+      {[
+        ["input", t.modalityInput],
+        ["output", t.modalityOutput],
+      ].map(([direction, label]) => {
+        const values = modelModalities(model, direction);
+        return (
+          <div key={direction} className="flex items-center gap-1">
+            <span className="w-8 shrink-0 text-xs text-muted-foreground">
+              {label}
+            </span>
+            <span className="flex flex-wrap gap-1">
+              {(values.length ? values : [null]).map((value) => {
+                const Icon = MODALITY_ICONS[value] || CircleHelp;
+                const name = value ? t.optionLabels[value] || value : t.unknown;
+                return (
+                  <span
+                    key={value || "unknown"}
+                    role="img"
+                    aria-label={name}
+                    title={name}
+                    className="inline-flex min-h-6 items-center gap-1 rounded-md border border-border px-1 text-muted-foreground"
+                  >
+                    <Icon aria-hidden="true" className="size-4 shrink-0" />
+                    {value && !MODALITY_ICONS[value] && (
+                      <span className="max-w-24 truncate text-xs">{value}</span>
+                    )}
+                  </span>
+                );
+              })}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function initialLanguage() {
   try {
@@ -480,6 +535,11 @@ export default function App() {
     ["completion", t.colOutputPrice],
     ["maxOutput", t.colMaxOutput],
   ];
+  const tableColumns = [
+    ...columns.slice(0, 2),
+    ["modalities", t.colModalities],
+    ...columns.slice(2),
+  ];
 
   return (
     <main
@@ -834,6 +894,12 @@ export default function App() {
                                 </ItemDescription>
                               </ItemContent>
                               <ItemFooter className="grid grid-cols-2 gap-2 border-t border-border pt-2 text-xs tabular-nums">
+                                <div className="col-span-2 flex items-start justify-between gap-2">
+                                  <span className="text-muted-foreground">
+                                    {t.colModalities}
+                                  </span>
+                                  <ModelModalities model={model} t={t} />
+                                </div>
                                 {[
                                   [
                                     t.colContext,
@@ -875,55 +941,63 @@ export default function App() {
                         ))}
                   </ItemGroup>
                   <div className="hidden lg:block">
-                    <Table className="min-w-[760px] tabular-nums [&_tr>*:first-child]:pl-6 [&_tr>*:last-child]:pr-6">
+                    <Table className="min-w-[900px] tabular-nums [&_tr>*:first-child]:pl-6 [&_tr>*:last-child]:pr-6">
                       <TableHeader>
                         <TableRow>
-                          {columns.map(([key, label]) => (
+                          {tableColumns.map(([key, label]) => (
                             <TableHead
                               key={key}
                               className={
-                                key === "name" || key === "id"
+                                key === "name" ||
+                                key === "id" ||
+                                key === "modalities"
                                   ? "text-left"
                                   : "text-right"
                               }
                               aria-sort={
-                                filters?.sort === key
-                                  ? filters.dir === "asc"
-                                    ? "ascending"
-                                    : "descending"
-                                  : "none"
+                                key === "modalities"
+                                  ? undefined
+                                  : filters?.sort === key
+                                    ? filters.dir === "asc"
+                                      ? "ascending"
+                                      : "descending"
+                                    : "none"
                               }
                             >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={cn(
-                                  "w-full px-0",
-                                  key === "name" || key === "id"
-                                    ? "justify-start"
-                                    : "justify-end",
-                                )}
-                                title={`${t.sortBy}: ${label}`}
-                                disabled={!filters}
-                                onClick={() =>
-                                  update({
-                                    sort: key,
-                                    dir:
-                                      filters.sort === key &&
-                                      filters.dir === "asc"
-                                        ? "desc"
-                                        : "asc",
-                                  })
-                                }
-                              >
-                                {filters?.sort === key &&
-                                  (filters.dir === "asc" ? (
-                                    <ArrowUp aria-hidden="true" />
-                                  ) : (
-                                    <ArrowDown aria-hidden="true" />
-                                  ))}
-                                {label}
-                              </Button>
+                              {key === "modalities" ? (
+                                label
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={cn(
+                                    "w-full px-0",
+                                    key === "name" || key === "id"
+                                      ? "justify-start"
+                                      : "justify-end",
+                                  )}
+                                  title={`${t.sortBy}: ${label}`}
+                                  disabled={!filters}
+                                  onClick={() =>
+                                    update({
+                                      sort: key,
+                                      dir:
+                                        filters.sort === key &&
+                                        filters.dir === "asc"
+                                          ? "desc"
+                                          : "asc",
+                                    })
+                                  }
+                                >
+                                  {filters?.sort === key &&
+                                    (filters.dir === "asc" ? (
+                                      <ArrowUp aria-hidden="true" />
+                                    ) : (
+                                      <ArrowDown aria-hidden="true" />
+                                    ))}
+                                  {label}
+                                </Button>
+                              )}
                             </TableHead>
                           ))}
                         </TableRow>
@@ -962,6 +1036,9 @@ export default function App() {
                                       className="font-mono text-xs font-normal text-muted-foreground"
                                     />
                                   </TableCell>
+                                  <TableCell>
+                                    <ModelModalities model={model} t={t} />
+                                  </TableCell>
                                   <TableCell className="text-right font-mono tabular-nums">
                                     {formatContext(model.context_length)}
                                   </TableCell>
@@ -993,7 +1070,7 @@ export default function App() {
                             })
                           : Array.from({ length: 8 }, (_, index) => (
                               <TableRow key={index}>
-                                {columns.map(([key]) => (
+                                {tableColumns.map(([key]) => (
                                   <TableCell key={key}>
                                     <Skeleton className="h-5 w-full" />
                                   </TableCell>

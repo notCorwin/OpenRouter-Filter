@@ -5,6 +5,7 @@ import {
   defaultFilters,
   displayModelName,
   filterModels,
+  modelModalities,
   normalizeCatalog,
   sortModels,
 } from "./src/model.js";
@@ -105,6 +106,45 @@ test("modalities put the most useful choices first", () => {
     "other",
   ]);
   assert.deepEqual(options.outputModalities, ["text", "image", "audio"]);
+});
+
+test("modality display and filtering share a safe source for missing and new values", () => {
+  const model = {
+    id: "test/multimodal",
+    context_length: 262_144,
+    pricing: { prompt: "0.000001", completion: "0.000002" },
+    architecture: {
+      input_modalities: [" audio ", "text", "text", "future", null, 5, ""],
+      output_modalities: "invalid",
+    },
+    output_modalities: ["image", "text"],
+  };
+  assert.deepEqual(modelModalities(model, "input"), [
+    "text",
+    "audio",
+    "future",
+  ]);
+  assert.deepEqual(modelModalities(model, "output"), ["text", "image"]);
+  assert.deepEqual(
+    modelModalities(
+      { architecture: { input_modalities: [] }, input_modalities: ["text"] },
+      "input",
+    ),
+    [],
+  );
+  assert.deepEqual(modelModalities({}, "output"), []);
+  const options = catalogOptions([model]);
+  assert.deepEqual(options.inputModalities, ["text", "audio", "future"]);
+  const filters = {
+    ...defaultFilters(options),
+    inMods: ["future"],
+    outMods: ["image"],
+  };
+  assert.deepEqual(filterModels([model], filters), [model]);
+  assert.deepEqual(
+    filterModels([model], { ...filters, inMods: ["video"] }),
+    [],
+  );
 });
 
 test("model labels omit the brand prefix while name sorting uses the visible label", () => {

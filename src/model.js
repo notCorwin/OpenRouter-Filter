@@ -14,19 +14,33 @@ export function pricePerMillion(value) {
     : price * 1_000_000;
 }
 
+const modalityOrder = { text: 0, image: 1, audio: 2, video: 3, file: 4 };
+
+export function modelModalities(model, direction) {
+  const fromArchitecture = model.architecture?.[`${direction}_modalities`];
+  const fromModel = model[`${direction}_modalities`];
+  const values = Array.isArray(fromArchitecture)
+    ? fromArchitecture
+    : Array.isArray(fromModel)
+      ? fromModel
+      : [];
+  return [
+    ...new Set(
+      values.flatMap((value) =>
+        typeof value === "string" && value.trim() ? [value.trim()] : [],
+      ),
+    ),
+  ].sort(
+    (a, b) =>
+      (modalityOrder[a] ?? 99) - (modalityOrder[b] ?? 99) || a.localeCompare(b),
+  );
+}
+
 export function catalogOptions(models) {
   const unique = (values) => [...new Set(values)].sort((a, b) => a - b);
-  const modalityOrder = { text: 0, image: 1, audio: 2, video: 3, file: 4 };
   const modalities = (direction) =>
     [
-      ...new Set(
-        models.flatMap(
-          (m) =>
-            m.architecture?.[`${direction}_modalities`] ||
-            m[`${direction}_modalities`] ||
-            [],
-        ),
-      ),
+      ...new Set(models.flatMap((model) => modelModalities(model, direction))),
     ].sort(
       (a, b) =>
         (modalityOrder[a] ?? 99) - (modalityOrder[b] ?? 99) ||
@@ -100,10 +114,7 @@ export function filterModels(models, filters) {
       ["input", filters.inMods],
       ["output", filters.outMods],
     ]) {
-      const supported =
-        model.architecture?.[`${key}_modalities`] ||
-        model[`${key}_modalities`] ||
-        [];
+      const supported = modelModalities(model, key);
       if (!selected.every((value) => supported.includes(value))) return false;
     }
     if (
