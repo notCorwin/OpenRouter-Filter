@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
-  ArrowUpDown,
   Check,
   ChevronDown,
   RotateCcw,
@@ -895,6 +894,7 @@ export default function App() {
                                 variant="ghost"
                                 size="sm"
                                 className="w-full justify-center"
+                                title={`${t.sortBy}: ${label}`}
                                 disabled={!filters}
                                 onClick={() =>
                                   update({
@@ -907,16 +907,16 @@ export default function App() {
                                   })
                                 }
                               >
-                                {label}
-                                {filters?.sort === key ? (
-                                  filters.dir === "asc" ? (
-                                    <ArrowUp data-icon="inline-end" />
-                                  ) : (
-                                    <ArrowDown data-icon="inline-end" />
-                                  )
-                                ) : (
-                                  <ArrowUpDown data-icon="inline-end" />
-                                )}
+                                <span className="relative">
+                                  {label}
+                                  {filters?.sort === key ? (
+                                    filters.dir === "asc" ? (
+                                      <ArrowUp className="absolute top-1/2 left-full ml-1 -translate-y-1/2" />
+                                    ) : (
+                                      <ArrowDown className="absolute top-1/2 left-full ml-1 -translate-y-1/2" />
+                                    )
+                                  ) : null}
+                                </span>
                               </Button>
                             </TableHead>
                           ))}
@@ -933,7 +933,7 @@ export default function App() {
                               );
                               return (
                                 <TableRow key={model.id}>
-                                  <TableCell className="max-w-52 whitespace-normal font-medium break-words">
+                                  <TableCell className="max-w-52 text-center whitespace-normal font-medium break-words">
                                     <CopyText
                                       value={displayModelName(model)}
                                       copyKey={`${model.id}:name`}
@@ -941,11 +941,11 @@ export default function App() {
                                       copiedLabel={t.copied}
                                       copied={copied}
                                       onCopy={copyText}
-                                      className="text-sm"
+                                      className="mx-auto justify-center text-center text-sm"
                                       wrap
                                     />
                                   </TableCell>
-                                  <TableCell className="max-w-56">
+                                  <TableCell className="max-w-56 text-center">
                                     <CopyText
                                       value={model.id}
                                       copyKey={`${model.id}:id`}
@@ -953,7 +953,7 @@ export default function App() {
                                       copiedLabel={t.copied}
                                       copied={copied}
                                       onCopy={copyText}
-                                      className="font-mono text-xs font-normal text-muted-foreground"
+                                      className="mx-auto justify-center font-mono text-xs font-normal text-muted-foreground"
                                     />
                                   </TableCell>
                                   <TableCell className="text-center font-mono tabular-nums">
