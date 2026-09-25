@@ -875,7 +875,7 @@ export default function App() {
                         ))}
                   </ItemGroup>
                   <div className="hidden lg:block">
-                    <Table className="min-w-[760px] tabular-nums">
+                    <Table className="min-w-[760px] tabular-nums [&_tr>*:first-child]:pl-6 [&_tr>*:last-child]:pr-6">
                       <TableHeader>
                         <TableRow>
                           {columns.map(([key, label]) => (
