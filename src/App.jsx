@@ -690,6 +690,13 @@ export default function App() {
                       checked={filters.batch}
                       onChange={(batch) => update({ batch })}
                     />
+                    <CheckboxField
+                      id="latest"
+                      label={t.includeLatest}
+                      description={t.includeLatestDescription}
+                      checked={filters.latest}
+                      onChange={(latest) => update({ latest })}
+                    />
                   </div>
                   <Separator />
                   <div className="grid gap-5 md:grid-cols-2">

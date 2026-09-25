@@ -89,6 +89,41 @@ test("catalog filtering keeps paid minimums separate from the free toggle and ex
   assert.equal(I18N["zh-CN"].optionLabels.response_format, "响应格式");
 });
 
+test("Latest aliases stay hidden until enabled without hiding similar names", () => {
+  const shared = {
+    context_length: 262_144,
+    architecture: { input_modalities: ["text"], output_modalities: ["text"] },
+    pricing: { prompt: "0.000001", completion: "0.000002" },
+  };
+  const models = [
+    { ...shared, id: "vendor/model-latest", name: "Model" },
+    { ...shared, id: "vendor/name-only", name: "Model Latest" },
+    { ...shared, id: "vendor/latestish", name: "Latestish" },
+    { ...shared, id: "latestai/model", name: "Model" },
+    {
+      ...shared,
+      id: "vendor/model-latest:batch",
+      name: "Model Latest (Batch)",
+    },
+  ];
+  const defaults = defaultFilters(catalogOptions(models));
+  const ids = (filters) =>
+    filterModels(models, filters).map((model) => model.id);
+  assert.equal(defaults.latest, false);
+  assert.deepEqual(ids(defaults), ["vendor/latestish", "latestai/model"]);
+  assert.deepEqual(ids({ ...defaults, latest: true }), [
+    "vendor/model-latest",
+    "vendor/name-only",
+    "vendor/latestish",
+    "latestai/model",
+  ]);
+  assert.deepEqual(ids({ ...defaults, batch: true }), [
+    "vendor/latestish",
+    "latestai/model",
+  ]);
+  assert.equal(ids({ ...defaults, latest: true, batch: true }).length, 5);
+});
+
 test("modalities put the most useful choices first", () => {
   const options = catalogOptions([
     {

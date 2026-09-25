@@ -90,6 +90,7 @@ export function defaultFilters(options) {
     outMax: "Infinity",
     free: false,
     batch: false,
+    latest: false,
     inMods: options.inputModalities.includes("text") ? ["text"] : [],
     outMods: options.outputModalities.includes("text") ? ["text"] : [],
     params: options.parameters.includes("tools") ? ["tools"] : [],
@@ -105,6 +106,12 @@ export function filterModels(models, filters) {
     if (
       !filters.batch &&
       (model.id.endsWith(":batch") || /\(batch\)/i.test(model.name || ""))
+    )
+      return false;
+    if (
+      !filters.latest &&
+      (/(?:^|[-_/:])latest(?=$|[-_/:])/i.test(model.id) ||
+        /\blatest\b/i.test(model.name || ""))
     )
       return false;
     if (
