@@ -882,9 +882,7 @@ export default function App() {
                           {columns.map(([key, label]) => (
                             <TableHead
                               key={key}
-                              className={cn(
-                                key !== "name" && key !== "id" && "text-center",
-                              )}
+                              className="text-center"
                               aria-sort={
                                 filters?.sort === key
                                   ? filters.dir === "asc"
@@ -896,12 +894,7 @@ export default function App() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className={cn(
-                                  "w-full",
-                                  key === "name" || key === "id"
-                                    ? "justify-start"
-                                    : "justify-center",
-                                )}
+                                className="w-full justify-center"
                                 disabled={!filters}
                                 onClick={() =>
                                   update({
