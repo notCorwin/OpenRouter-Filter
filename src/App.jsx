@@ -613,7 +613,9 @@ export default function App() {
       {!error && (
         <div className="flex min-w-0 flex-col gap-6">
           <Card className="min-w-0">
-            <CardHeader>
+            <CardHeader
+              className={cn(!filtersOpen && "pb-(--card-spacing) md:pb-0")}
+            >
               <CardTitle className="flex items-center gap-2">
                 <SlidersHorizontal aria-hidden="true" className="size-4" />
                 {t.filters}
